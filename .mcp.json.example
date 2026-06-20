@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "cfo": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["packages/mcp/dist/index.js"],
+      "env": {
+        "CFO_API_BASE_URL": "http://localhost:3000",
+        "CFO_PAT": "<your-personal-access-token-from-settings>"
+      }
+    }
+  }
+}

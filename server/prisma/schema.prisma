@@ -1,0 +1,199 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
+  passwordHash String?
+  name         String
+  role         String    @default("owner") // owner | partner
+  householdId  Int?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  household    Household? @relation(fields: [householdId], references: [id])
+  sentInvites  HouseholdInvite[]
+  accessTokens PersonalAccessToken[]
+
+  @@index([householdId])
+}
+
+model Household {
+  id           Int       @id @default(autoincrement())
+  name         String
+  stateRate    Decimal?  @db.Decimal(5, 4) // e.g. 0.0930 for CA 9.3%
+  filingStatus String    @default("single") // single | mfj | mfs | hoh
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  members      User[]
+  invites      HouseholdInvite[]
+  clients      CfoClient[]
+  invoices     CfoInvoice[]
+  transactions CfoTransaction[]
+  expenses     CfoExpense[]
+  budgetTargets CfoBudgetTarget[]
+  taxPayments  CfoTaxPayment[]
+}
+
+model HouseholdInvite {
+  id          Int       @id @default(autoincrement())
+  householdId Int
+  invitedBy   Int
+  email       String
+  token       String    @unique
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  inviter     User      @relation(fields: [invitedBy], references: [id])
+
+  @@index([token])
+  @@index([email])
+}
+
+model PersonalAccessToken {
+  id         Int       @id @default(autoincrement())
+  userId     Int
+  name       String
+  tokenHash  String    @unique // sha256 of the raw token; raw token never stored
+  lastUsedAt DateTime?
+  expiresAt  DateTime?
+  createdAt  DateTime  @default(now())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model CfoClient {
+  id           Int        @id @default(autoincrement())
+  householdId  Int
+  name         String
+  company      String?
+  contactEmail String?
+  contactPhone String?
+  hourlyRate   Decimal?   @db.Decimal(10, 2)
+  notes        String?
+  archivedAt   DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  household    Household  @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  invoices     CfoInvoice[]
+
+  @@index([householdId])
+  @@index([householdId, archivedAt])
+}
+
+model CfoInvoice {
+  id            Int            @id @default(autoincrement())
+  householdId   Int
+  clientId      Int
+  invoiceNumber String
+  status        String         @default("draft") // draft | sent | paid | overdue | void
+  issuedAt      DateTime?
+  dueAt         DateTime?
+  paidAt        DateTime?
+  subtotal      Decimal        @db.Decimal(10, 2) @default(0)
+  total         Decimal        @db.Decimal(10, 2) @default(0)
+  notes         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  household     Household      @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  client        CfoClient      @relation(fields: [clientId], references: [id])
+  lineItems     CfoLineItem[]
+  transactions  CfoTransaction[]
+
+  @@unique([householdId, invoiceNumber])
+  @@index([householdId, status])
+  @@index([householdId, issuedAt])
+  @@index([clientId])
+}
+
+model CfoLineItem {
+  id          Int        @id @default(autoincrement())
+  invoiceId   Int
+  description String
+  quantity    Decimal    @db.Decimal(10, 4)
+  unitPrice   Decimal    @db.Decimal(10, 2)
+  amount      Decimal    @db.Decimal(10, 2) // stored: quantity * unitPrice
+  sortOrder   Int        @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  invoice     CfoInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+}
+
+model CfoTransaction {
+  id          Int         @id @default(autoincrement())
+  householdId Int
+  invoiceId   Int?
+  amount      Decimal     @db.Decimal(10, 2)
+  receivedAt  DateTime
+  method      String?     // ach | check | wire | paypal | venmo | other
+  reference   String?
+  notes       String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  household   Household   @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  invoice     CfoInvoice? @relation(fields: [invoiceId], references: [id])
+
+  @@index([householdId, receivedAt])
+  @@index([invoiceId])
+}
+
+model CfoExpense {
+  id              Int       @id @default(autoincrement())
+  householdId     Int
+  category        String
+  description     String
+  amount          Decimal   @db.Decimal(10, 2)
+  expenseDate     DateTime
+  vendor          String?
+  isTaxDeductible Boolean   @default(false)
+  isPersonal      Boolean   @default(false)
+  receiptUrl      String?
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  household       Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  @@index([householdId, expenseDate])
+  @@index([householdId, category])
+  @@index([householdId, isTaxDeductible])
+}
+
+model CfoBudgetTarget {
+  id           Int       @id @default(autoincrement())
+  householdId  Int
+  yearMonth    String    // "YYYY-MM"
+  category     String
+  targetAmount Decimal   @db.Decimal(10, 2)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  household    Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  @@unique([householdId, yearMonth, category])
+  @@index([householdId, yearMonth])
+}
+
+model CfoTaxPayment {
+  id          Int       @id @default(autoincrement())
+  householdId Int
+  year        Int
+  quarter     Int
+  type        String    // federal_estimated | state_estimated | other
+  amount      Decimal   @db.Decimal(10, 2)
+  dueDate     DateTime
+  paidDate    DateTime?
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  @@index([householdId, year, quarter])
+}
