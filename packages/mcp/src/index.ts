@@ -5,6 +5,7 @@ import { registerInvoiceTools } from './tools/invoices.js';
 import { registerExpenseTools } from './tools/expenses.js';
 import { registerBudgetTools } from './tools/budget.js';
 import { registerDashboardTools } from './tools/dashboard.js';
+import { registerTaxTools } from './tools/taxes.js';
 
 const server = new McpServer({
   name: 'contractor-cfo',
@@ -16,6 +17,7 @@ registerInvoiceTools(server);
 registerExpenseTools(server);
 registerBudgetTools(server);
 registerDashboardTools(server);
+registerTaxTools(server);
 
 const transport = new StdioServerTransport();
 await server.connect(transport);

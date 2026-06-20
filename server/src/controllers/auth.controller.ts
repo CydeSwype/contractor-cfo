@@ -29,7 +29,7 @@ export async function signup(req: Request, res: Response): Promise<void> {
     data: { name, email, passwordHash, role: 'owner', householdId: household.id },
   });
 
-  const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!);
+  const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!, { expiresIn: '30d' });
   res.status(201).json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
 }
 
@@ -53,7 +53,7 @@ export async function login(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!);
+  const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!, { expiresIn: '30d' });
   res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
 }
 
@@ -93,6 +93,6 @@ export async function acceptInvite(req: Request, res: Response): Promise<void> {
     data: { acceptedAt: new Date() },
   });
 
-  const jwtToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!);
+  const jwtToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!, { expiresIn: '30d' });
   res.status(201).json({ token: jwtToken, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
 }

@@ -4,14 +4,24 @@ import { getHousehold, updateHousehold, inviteMember, getTokens, createToken, de
 
 interface Token { id: number; name: string; lastUsedAt: string | null; createdAt: string; token?: string }
 
+interface HouseholdState {
+  name: string;
+  stateRate: string | null;
+  filingStatus: string;
+  priorYearTax: string | null;
+  otherIncome: string | null;
+  members: { id: number; name: string; email: string; role: string }[];
+}
+
 export default function Settings() {
-  const [household, setHousehold] = useState<{ name: string; stateRate: string | null; filingStatus: string; members: { id: number; name: string; email: string; role: string }[] } | null>(null);
+  const [household, setHousehold] = useState<HouseholdState | null>(null);
   const [tokens, setTokens] = useState<Token[]>([]);
   const [newToken, setNewToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteUrl, setInviteUrl] = useState('');
   const [tokenName, setTokenName] = useState('');
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     getHousehold().then(setHousehold);
@@ -25,8 +35,12 @@ export default function Settings() {
       name: household.name,
       stateRate: household.stateRate ? parseFloat(household.stateRate) : null,
       filingStatus: household.filingStatus,
+      priorYearTax: household.priorYearTax ? parseFloat(household.priorYearTax) : null,
+      otherIncome: household.otherIncome ? parseFloat(household.otherIncome) : null,
     });
     setHousehold(updated);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
   }
 
   async function handleInvite(e: FormEvent) {
@@ -94,8 +108,34 @@ export default function Settings() {
                 </select>
               </div>
             </div>
-            <button type="submit" className="bg-brand text-white rounded-lg px-4 py-2 text-sm font-medium hover:opacity-90">
-              Save
+
+            <div className="border-t border-border pt-3 space-y-3">
+              <p className="text-xs text-fg-muted">Tax estimate inputs — used by the dashboard and Claude</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-fg-secondary mb-1">Prior year total tax ($)</label>
+                  <input type="number" step="1" min="0"
+                    value={household.priorYearTax ?? ''}
+                    onChange={e => setHousehold(h => h ? { ...h, priorYearTax: e.target.value || null } : h)}
+                    placeholder="e.g. 24000"
+                    className="w-full bg-canvas border border-border rounded-lg px-3 py-2 text-fg text-sm focus:outline-none focus:border-brand" />
+                  <p className="text-xs text-fg-muted mt-1">From last year's tax return — enables safe harbor calc</p>
+                </div>
+                <div>
+                  <label className="block text-xs text-fg-secondary mb-1">Other annual income ($)</label>
+                  <input type="number" step="1" min="0"
+                    value={household.otherIncome ?? ''}
+                    onChange={e => setHousehold(h => h ? { ...h, otherIncome: e.target.value || null } : h)}
+                    placeholder="e.g. 50000"
+                    className="w-full bg-canvas border border-border rounded-lg px-3 py-2 text-fg text-sm focus:outline-none focus:border-brand" />
+                  <p className="text-xs text-fg-muted mt-1">W2, dividends, rental income, etc.</p>
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" className="flex items-center gap-2 bg-brand text-white rounded-lg px-4 py-2 text-sm font-medium hover:opacity-90">
+              {saved ? <Check size={14} /> : null}
+              {saved ? 'Saved' : 'Save'}
             </button>
           </form>
 

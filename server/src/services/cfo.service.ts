@@ -41,21 +41,19 @@ export async function getYtdExpenses(
 ): Promise<{ total: number; business: number; personal: number; deductible: number }> {
   const start = new Date(`${year}-01-01`);
   const end = new Date(`${year + 1}-01-01`);
+  const where = { householdId, expenseDate: { gte: start, lt: end } };
 
-  const expenses = await prisma.cfoExpense.findMany({
-    where: { householdId, expenseDate: { gte: start, lt: end } },
-    select: { amount: true, isPersonal: true, isTaxDeductible: true },
-  });
+  const [total, personal, deductible] = await Promise.all([
+    prisma.cfoExpense.aggregate({ where, _sum: { amount: true } }),
+    prisma.cfoExpense.aggregate({ where: { ...where, isPersonal: true }, _sum: { amount: true } }),
+    prisma.cfoExpense.aggregate({ where: { ...where, isTaxDeductible: true }, _sum: { amount: true } }),
+  ]);
 
-  let total = 0, business = 0, personal = 0, deductible = 0;
-  for (const e of expenses) {
-    const amt = parseFloat(e.amount.toString());
-    total += amt;
-    if (e.isPersonal) personal += amt;
-    else business += amt;
-    if (e.isTaxDeductible) deductible += amt;
-  }
-  return { total, business, personal, deductible };
+  const totalAmt = parseFloat((total._sum.amount ?? 0).toString());
+  const personalAmt = parseFloat((personal._sum.amount ?? 0).toString());
+  const deductibleAmt = parseFloat((deductible._sum.amount ?? 0).toString());
+
+  return { total: totalAmt, business: totalAmt - personalAmt, personal: personalAmt, deductible: deductibleAmt };
 }
 
 export async function getYtdTaxPayments(householdId: number, year: number): Promise<number> {

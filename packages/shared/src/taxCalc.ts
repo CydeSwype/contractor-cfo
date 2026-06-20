@@ -1,57 +1,35 @@
 import type { FilingStatus, TaxEstimate } from './types/index.js';
 
-// 2025 IRS figures
-const SS_WAGE_BASE_2025 = 176100;
-const STANDARD_DEDUCTION_2025: Record<FilingStatus, number> = {
-  single: 15000,
-  mfj: 30000,
-  mfs: 15000,
-  hoh: 22500,
+interface YearConstants {
+  ssWageBase: number;
+  standardDeduction: Record<FilingStatus, number>;
+  brackets: Record<FilingStatus, [number, number][]>;
+}
+
+// Add a new entry here each October when IRS publishes the following year's figures.
+// The last entry is used as a fallback for any year not explicitly listed.
+const TAX_CONSTANTS: Record<number, YearConstants> = {
+  2025: {
+    ssWageBase: 176100,
+    standardDeduction: { single: 15000, mfj: 30000, mfs: 15000, hoh: 22500 },
+    brackets: {
+      single: [[0.10,11925],[0.12,48475],[0.22,103350],[0.24,197300],[0.32,250525],[0.35,626350],[0.37,Infinity]],
+      mfj:    [[0.10,23850],[0.12,96950],[0.22,206700],[0.24,394600],[0.32,501050],[0.35,751600],[0.37,Infinity]],
+      mfs:    [[0.10,11925],[0.12,48475],[0.22,103350],[0.24,197300],[0.32,250525],[0.35,375800],[0.37,Infinity]],
+      hoh:    [[0.10,17000],[0.12,64850],[0.22,103350],[0.24,197300],[0.32,250500],[0.35,626350],[0.37,Infinity]],
+    },
+  },
 };
 
-// 2025 federal income tax brackets [rate, upperBound] — last entry is the top rate
-const BRACKETS_2025: Record<FilingStatus, [number, number][]> = {
-  single: [
-    [0.10, 11925],
-    [0.12, 48475],
-    [0.22, 103350],
-    [0.24, 197300],
-    [0.32, 250525],
-    [0.35, 626350],
-    [0.37, Infinity],
-  ],
-  mfj: [
-    [0.10, 23850],
-    [0.12, 96950],
-    [0.22, 206700],
-    [0.24, 394600],
-    [0.32, 501050],
-    [0.35, 751600],
-    [0.37, Infinity],
-  ],
-  mfs: [
-    [0.10, 11925],
-    [0.12, 48475],
-    [0.22, 103350],
-    [0.24, 197300],
-    [0.32, 250525],
-    [0.35, 375800],
-    [0.37, Infinity],
-  ],
-  hoh: [
-    [0.10, 17000],
-    [0.12, 64850],
-    [0.22, 103350],
-    [0.24, 197300],
-    [0.32, 250500],
-    [0.35, 626350],
-    [0.37, Infinity],
-  ],
-};
+function getConstants(year: number): YearConstants {
+  if (TAX_CONSTANTS[year]) return TAX_CONSTANTS[year];
+  // Fall back to the most recent year we have; estimates will be close but not exact.
+  const knownYears = Object.keys(TAX_CONSTANTS).map(Number).sort((a, b) => b - a);
+  return TAX_CONSTANTS[knownYears[0]];
+}
 
-function applyBrackets(taxableIncome: number, filing: FilingStatus): number {
+function applyBrackets(taxableIncome: number, filing: FilingStatus, brackets: [number, number][]): number {
   if (taxableIncome <= 0) return 0;
-  const brackets = BRACKETS_2025[filing];
   let tax = 0;
   let prev = 0;
   for (const [rate, upper] of brackets) {
@@ -96,42 +74,32 @@ export function estimateQuarterlyTax(input: TaxEstimateInput): TaxEstimate {
     paymentsToDate = 0,
   } = input;
 
-  // Self-employment tax
+  const { ssWageBase, standardDeduction, brackets } = getConstants(year);
+
   const netSEIncome = Math.max(0, grossIncome - businessExpenses);
   const seTaxBase = netSEIncome * 0.9235;
 
-  // SS capped at wage base; Medicare uncapped; combined 15.3% below SS base
   let seTax = 0;
-  if (seTaxBase <= SS_WAGE_BASE_2025) {
+  if (seTaxBase <= ssWageBase) {
     seTax = seTaxBase * 0.153;
   } else {
-    seTax = SS_WAGE_BASE_2025 * 0.124 + seTaxBase * 0.029;
+    seTax = ssWageBase * 0.124 + seTaxBase * 0.029;
   }
 
-  // 50% of SE tax is deductible from AGI
   const seDeduction = seTax * 0.5;
-
-  const standardDeduction = STANDARD_DEDUCTION_2025[filingStatus];
   const agi = Math.max(0, grossIncome + otherIncome - seDeduction);
-  const taxableIncome = Math.max(0, agi - standardDeduction);
+  const taxableIncome = Math.max(0, agi - standardDeduction[filingStatus]);
 
-  const federalIncomeTax = applyBrackets(taxableIncome, filingStatus);
-
-  // Simplified state tax: apply state rate to taxable income
+  const federalIncomeTax = applyBrackets(taxableIncome, filingStatus, brackets[filingStatus]);
   const stateIncomeTax = taxableIncome * stateRate;
-
   const totalEstimatedTax = federalIncomeTax + seTax + stateIncomeTax;
 
-  // Safe harbor: 100% of prior year tax (110% if prior-year AGI > $150k)
   const safeHarborMultiplier = agi > 150000 ? 1.1 : 1.0;
   const safeHarborAnnual = priorYearTax * safeHarborMultiplier;
-
   const annualTarget = Math.max(totalEstimatedTax, safeHarborAnnual);
   const perQuarterPayment = annualTarget / 4;
 
-  const recommendedReservePercent =
-    grossIncome > 0 ? totalEstimatedTax / grossIncome : 0;
-
+  const recommendedReservePercent = grossIncome > 0 ? totalEstimatedTax / grossIncome : 0;
   const remainingLiability = Math.max(0, totalEstimatedTax - paymentsToDate);
 
   return {

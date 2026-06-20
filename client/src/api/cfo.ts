@@ -5,8 +5,8 @@ import type {
 } from '@contractor-cfo/shared';
 
 // Dashboard
-export const getDashboard = (year?: number, priorYearTax?: number) =>
-  api.get<CfoDashboard>('/cfo/dashboard', { params: { year, priorYearTax } }).then(r => r.data);
+export const getDashboard = (year?: number) =>
+  api.get<CfoDashboard>('/cfo/dashboard', { params: { year } }).then(r => r.data);
 
 // Clients
 export const getClients = (archived?: boolean) =>
@@ -79,7 +79,7 @@ export const deleteToken = (id: number) =>
 // Household
 export const getHousehold = () =>
   api.get('/household').then(r => r.data);
-export const updateHousehold = (body: { name?: string; stateRate?: number | null; filingStatus?: string }) =>
+export const updateHousehold = (body: { name?: string; stateRate?: number | null; filingStatus?: string; priorYearTax?: number | null; otherIncome?: number | null }) =>
   api.put('/household', body).then(r => r.data);
 export const inviteMember = (email: string) =>
   api.post('/household/invite', { email }).then(r => r.data);

@@ -10,54 +10,55 @@ import { listExpenses, createExpense, updateExpense, deleteExpense } from '../co
 import { getBudgetTargets, upsertBudgetTargets, getBudgetVsActuals } from '../controllers/cfo/budget.controller';
 import { getTaxEstimate, listTaxPayments, createTaxPayment, updateTaxPayment, deleteTaxPayment } from '../controllers/cfo/taxes.controller';
 import { getDashboard } from '../controllers/cfo/dashboard.controller';
+import { asyncHandler } from '../utils/asyncHandler';
 
 const router = Router();
 router.use(authenticate);
 
 // Dashboard
-router.get('/dashboard', getDashboard);
+router.get('/dashboard', asyncHandler(getDashboard));
 
 // Clients
-router.get('/clients', listClients);
-router.get('/clients/:id', getClient);
-router.post('/clients', createClient);
-router.put('/clients/:id', updateClient);
-router.patch('/clients/:id/archive', archiveClient);
+router.get('/clients', asyncHandler(listClients));
+router.get('/clients/:id', asyncHandler(getClient));
+router.post('/clients', asyncHandler(createClient));
+router.put('/clients/:id', asyncHandler(updateClient));
+router.patch('/clients/:id/archive', asyncHandler(archiveClient));
 
 // Invoices
-router.get('/invoices', listInvoices);
-router.get('/invoices/:id', getInvoice);
-router.post('/invoices', createInvoice);
-router.put('/invoices/:id', updateInvoice);
-router.patch('/invoices/:id/send', markInvoiceSent);
-router.patch('/invoices/:id/void', voidInvoice);
-router.post('/invoices/:id/line-items', addLineItem);
-router.put('/invoices/:id/line-items/:itemId', updateLineItem);
-router.delete('/invoices/:id/line-items/:itemId', deleteLineItem);
+router.get('/invoices', asyncHandler(listInvoices));
+router.get('/invoices/:id', asyncHandler(getInvoice));
+router.post('/invoices', asyncHandler(createInvoice));
+router.put('/invoices/:id', asyncHandler(updateInvoice));
+router.patch('/invoices/:id/send', asyncHandler(markInvoiceSent));
+router.patch('/invoices/:id/void', asyncHandler(voidInvoice));
+router.post('/invoices/:id/line-items', asyncHandler(addLineItem));
+router.put('/invoices/:id/line-items/:itemId', asyncHandler(updateLineItem));
+router.delete('/invoices/:id/line-items/:itemId', asyncHandler(deleteLineItem));
 
 // Transactions (income received)
-router.get('/transactions', listTransactions);
-router.post('/transactions', createTransaction);
-router.put('/transactions/:id', updateTransaction);
-router.delete('/transactions/:id', deleteTransaction);
+router.get('/transactions', asyncHandler(listTransactions));
+router.post('/transactions', asyncHandler(createTransaction));
+router.put('/transactions/:id', asyncHandler(updateTransaction));
+router.delete('/transactions/:id', asyncHandler(deleteTransaction));
 
 // Expenses
-router.get('/expenses', listExpenses);
-router.post('/expenses', createExpense);
-router.put('/expenses/:id', updateExpense);
-router.delete('/expenses/:id', deleteExpense);
+router.get('/expenses', asyncHandler(listExpenses));
+router.post('/expenses', asyncHandler(createExpense));
+router.put('/expenses/:id', asyncHandler(updateExpense));
+router.delete('/expenses/:id', asyncHandler(deleteExpense));
 
 // Budget
-router.get('/budget', getBudgetTargets);
-router.put('/budget', upsertBudgetTargets);
-router.get('/budget/actuals', getBudgetVsActuals);
+router.get('/budget', asyncHandler(getBudgetTargets));
+router.put('/budget', asyncHandler(upsertBudgetTargets));
+router.get('/budget/actuals', asyncHandler(getBudgetVsActuals));
 
 // Taxes
-router.get('/taxes/estimate', getTaxEstimate);
-router.post('/taxes/estimate', getTaxEstimate);
-router.get('/taxes/payments', listTaxPayments);
-router.post('/taxes/payments', createTaxPayment);
-router.put('/taxes/payments/:id', updateTaxPayment);
-router.delete('/taxes/payments/:id', deleteTaxPayment);
+router.get('/taxes/estimate', asyncHandler(getTaxEstimate));
+router.post('/taxes/estimate', asyncHandler(getTaxEstimate));
+router.get('/taxes/payments', asyncHandler(listTaxPayments));
+router.post('/taxes/payments', asyncHandler(createTaxPayment));
+router.put('/taxes/payments/:id', asyncHandler(updateTaxPayment));
+router.delete('/taxes/payments/:id', asyncHandler(deleteTaxPayment));
 
 export default router;

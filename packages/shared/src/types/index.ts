@@ -14,6 +14,8 @@ export interface Household {
   name: string;
   stateRate: string | null;
   filingStatus: FilingStatus;
+  priorYearTax: string | null;
+  otherIncome: string | null;
   createdAt: string;
   members: User[];
 }

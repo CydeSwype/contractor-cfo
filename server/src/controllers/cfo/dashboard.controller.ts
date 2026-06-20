@@ -9,7 +9,6 @@ export async function getDashboard(req: AuthRequest, res: Response): Promise<voi
   if (!householdId) { res.status(400).json({ error: 'No household' }); return; }
 
   const year = parseInt((req.query.year as string) ?? String(new Date().getFullYear()), 10);
-  const priorYearTax = parseFloat((req.query.priorYearTax as string) ?? '0');
 
   const [household, ytdIncome, expenses, paymentsToDate] = await Promise.all([
     prisma.household.findUnique({ where: { id: householdId } }),
@@ -20,6 +19,9 @@ export async function getDashboard(req: AuthRequest, res: Response): Promise<voi
 
   if (!household) { res.status(404).json({ error: 'Household not found' }); return; }
 
+  const priorYearTax = household.priorYearTax ? parseFloat(household.priorYearTax.toString()) : 0;
+  const otherIncome = household.otherIncome ? parseFloat(household.otherIncome.toString()) : 0;
+
   const taxEstimate = estimateQuarterlyTax({
     year,
     grossIncome: ytdIncome,
@@ -27,10 +29,10 @@ export async function getDashboard(req: AuthRequest, res: Response): Promise<voi
     filingStatus: household.filingStatus as 'single' | 'mfj' | 'mfs' | 'hoh',
     priorYearTax,
     stateRate: household.stateRate ? parseFloat(household.stateRate.toString()) : 0,
+    otherIncome,
     paymentsToDate,
   });
 
-  // Outstanding invoices
   const today = new Date();
   const [unpaidInvoices, overdueInvoices] = await Promise.all([
     prisma.cfoInvoice.findMany({
@@ -38,11 +40,7 @@ export async function getDashboard(req: AuthRequest, res: Response): Promise<voi
       select: { total: true },
     }),
     prisma.cfoInvoice.findMany({
-      where: {
-        householdId,
-        status: { in: ['sent'] },
-        dueAt: { lt: today },
-      },
+      where: { householdId, status: { in: ['sent', 'overdue'] }, dueAt: { lt: today } },
       select: { total: true },
     }),
   ]);

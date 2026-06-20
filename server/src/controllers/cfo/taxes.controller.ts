@@ -22,11 +22,17 @@ export async function getTaxEstimate(req: AuthRequest, res: Response): Promise<v
   };
 
   const year = parseInt(query.year ?? String(new Date().getFullYear()), 10);
-  const priorYearTax = parseFloat(query.priorYearTax ?? '0');
-  const otherIncome = parseFloat(query.otherIncome ?? '0');
 
   const household = await prisma.household.findUnique({ where: { id: householdId } });
   if (!household) { res.status(404).json({ error: 'Household not found' }); return; }
+
+  // Query params override household defaults — useful for what-if scenarios via MCP
+  const priorYearTax = query.priorYearTax !== undefined
+    ? parseFloat(query.priorYearTax)
+    : household.priorYearTax ? parseFloat(household.priorYearTax.toString()) : 0;
+  const otherIncome = query.otherIncome !== undefined
+    ? parseFloat(query.otherIncome)
+    : household.otherIncome ? parseFloat(household.otherIncome.toString()) : 0;
 
   const [grossIncome, expenses, paymentsToDate] = await Promise.all([
     getYtdIncome(householdId, year),

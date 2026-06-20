@@ -27,10 +27,12 @@ export async function updateHousehold(req: AuthRequest, res: Response): Promise<
   const { householdId } = req.user!;
   if (!householdId) { res.status(400).json({ error: 'No household' }); return; }
 
-  const { name, stateRate, filingStatus } = req.body as {
+  const { name, stateRate, filingStatus, priorYearTax, otherIncome } = req.body as {
     name?: string;
     stateRate?: number | null;
     filingStatus?: string;
+    priorYearTax?: number | null;
+    otherIncome?: number | null;
   };
 
   const household = await prisma.household.update({
@@ -39,6 +41,8 @@ export async function updateHousehold(req: AuthRequest, res: Response): Promise<
       ...(name !== undefined && { name }),
       ...(stateRate !== undefined && { stateRate }),
       ...(filingStatus !== undefined && { filingStatus }),
+      ...(priorYearTax !== undefined && { priorYearTax }),
+      ...(otherIncome !== undefined && { otherIncome }),
     },
     include: { members: { select: { id: true, name: true, email: true, role: true, createdAt: true } } },
   });
@@ -60,7 +64,6 @@ export async function inviteMember(req: AuthRequest, res: Response): Promise<voi
     data: { householdId, invitedBy: userId, email, token, expiresAt },
   });
 
-  // In production: send invite email. For now, return the token.
   res.status(201).json({
     id: invite.id,
     email: invite.email,

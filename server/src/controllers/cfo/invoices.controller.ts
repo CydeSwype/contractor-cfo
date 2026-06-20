@@ -20,6 +20,12 @@ export async function listInvoices(req: AuthRequest, res: Response): Promise<voi
     year?: string;
   };
 
+  // Promote stale sent invoices to overdue before reading
+  await prisma.cfoInvoice.updateMany({
+    where: { householdId, status: 'sent', dueAt: { lt: new Date() } },
+    data: { status: 'overdue' },
+  });
+
   const invoices = await prisma.cfoInvoice.findMany({
     where: {
       householdId,

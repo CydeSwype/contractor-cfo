@@ -27,9 +27,11 @@ model Household {
   id           Int       @id @default(autoincrement())
   name         String
   stateRate    Decimal?  @db.Decimal(5, 4) // e.g. 0.0930 for CA 9.3%
-  filingStatus String    @default("single") // single | mfj | mfs | hoh
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  filingStatus  String    @default("single") // single | mfj | mfs | hoh
+  priorYearTax  Decimal?  @db.Decimal(10, 2)
+  otherIncome   Decimal?  @db.Decimal(10, 2)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
   members      User[]
   invites      HouseholdInvite[]
   clients      CfoClient[]
