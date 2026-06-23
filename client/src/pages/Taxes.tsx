@@ -37,9 +37,9 @@ export default function Taxes() {
       const due = estimate?.quarterlyDueDates.find(d => d.quarter === payForm.quarter);
       await createTaxPayment({
         year,
-        quarter: payForm.quarter as unknown as string,
-        type: payForm.type as unknown as string,
-        amount: parseFloat(payForm.amount) as unknown as string,
+        quarter: payForm.quarter,
+        type: payForm.type as CfoTaxPayment['type'],
+        amount: payForm.amount,
         dueDate: due?.dueDate ?? new Date().toISOString(),
         paidDate: payForm.paidDate || undefined,
       });
