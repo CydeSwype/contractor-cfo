@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE = process.env.CFO_API_BASE_URL ?? 'http://localhost:3000/api';
+const BASE = process.env.CFO_API_BASE_URL ?? 'http://localhost:32161/api';
 const PAT = process.env.CFO_PAT ?? '';
 
 if (!PAT) {

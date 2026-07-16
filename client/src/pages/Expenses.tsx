@@ -1,6 +1,7 @@
 import { useEffect, useState, FormEvent } from 'react';
 import { Plus } from 'lucide-react';
 import { getExpenses, createExpense } from '../api/cfo';
+import DateField from '../components/DateField';
 import type { CfoExpense, ExpenseCategory } from '@contractor-cfo/shared';
 
 const CATEGORIES: ExpenseCategory[] = [
@@ -87,9 +88,9 @@ export default function Expenses() {
             </div>
             <div>
               <label className="block text-xs text-fg-secondary mb-1">Date</label>
-              <input type="date" value={form.expenseDate}
-                onChange={e => setForm(f => ({ ...f, expenseDate: e.target.value }))}
-                className="w-full bg-canvas border border-border rounded-lg px-3 py-2 text-fg text-sm focus:outline-none focus:border-brand"
+              <DateField
+                value={form.expenseDate}
+                onChange={v => setForm(f => ({ ...f, expenseDate: v ?? f.expenseDate }))}
               />
             </div>
             <div className="col-span-2">

@@ -4,13 +4,15 @@ import { createHash } from 'crypto';
 import prisma from '../db';
 
 export interface AuthRequest extends Request {
-  user?: { userId: number; householdId: number | null };
+  user?: { userId: number; householdId: number | null; name: string; email: string };
 }
 
 function extractBearer(req: Request): string | null {
   const header = req.headers.authorization;
-  if (!header?.startsWith('Bearer ')) return null;
-  return header.slice(7);
+  if (header?.startsWith('Bearer ')) return header.slice(7);
+  // Allow token via query param for direct browser downloads
+  if (typeof req.query.token === 'string' && req.query.token) return req.query.token;
+  return null;
 }
 
 export async function authenticate(
@@ -32,7 +34,7 @@ export async function authenticate(
       res.status(401).json({ error: 'User not found' });
       return;
     }
-    req.user = { userId: user.id, householdId: user.householdId };
+    req.user = { userId: user.id, householdId: user.householdId, name: user.name, email: user.email };
     next();
     return;
   } catch {
@@ -60,6 +62,6 @@ export async function authenticate(
     .update({ where: { id: pat.id }, data: { lastUsedAt: new Date() } })
     .catch(() => {});
 
-  req.user = { userId: pat.userId, householdId: pat.user.householdId };
+  req.user = { userId: pat.userId, householdId: pat.user.householdId, name: pat.user.name, email: pat.user.email };
   next();
 }

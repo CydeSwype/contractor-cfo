@@ -20,3 +20,30 @@ body {
   color: var(--color-fg);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
+
+/* react-day-picker (v9) themed to match the app's dark palette */
+.rdp-root {
+  --rdp-accent-color: var(--color-brand);
+  --rdp-accent-background-color: color-mix(in srgb, var(--color-brand) 20%, transparent);
+  --rdp-today-color: var(--color-brand);
+  --rdp-day-width: 2.1rem;
+  --rdp-day-height: 2.1rem;
+  --rdp-day_button-width: 2.1rem;
+  --rdp-day_button-height: 2.1rem;
+  margin: 0;
+  color: var(--color-fg);
+  font-size: 0.85rem;
+}
+.rdp-root .rdp-day_button:hover {
+  background-color: var(--color-border);
+}
+.rdp-root .rdp-chevron {
+  fill: var(--color-fg-secondary);
+}
+.rdp-root .rdp-weekday {
+  color: var(--color-fg-muted);
+}
+.rdp-root .rdp-caption_label,
+.rdp-root .rdp-month_caption {
+  color: var(--color-fg);
+}

@@ -1,18 +1,42 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
-import { getClient } from '../api/cfo';
+import { ArrowLeft, FileText } from 'lucide-react';
+import { getClient, updateClient } from '../api/cfo';
 import type { CfoClient } from '@contractor-cfo/shared';
 
 function fmt(n: string | number) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(n));
 }
 
+type ClientWithInvoices = CfoClient & {
+  invoices?: { id: number; invoiceNumber: string; status: string; total: string; issuedAt: string | null }[];
+};
+
 export default function ClientDetail() {
   const { id } = useParams<{ id: string }>();
-  const [client, setClient] = useState<CfoClient & { invoices?: { id: number; invoiceNumber: string; status: string; total: string; issuedAt: string | null }[] } | null>(null);
+  const [client, setClient] = useState<ClientWithInvoices | null>(null);
+  const [invoiceNotesDraft, setInvoiceNotesDraft] = useState('');
+  const [savingNotes, setSavingNotes] = useState(false);
 
-  useEffect(() => { if (id) getClient(parseInt(id, 10)).then(setClient); }, [id]);
+  useEffect(() => {
+    if (id) getClient(parseInt(id, 10)).then(c => {
+      setClient(c as ClientWithInvoices);
+      setInvoiceNotesDraft(c.invoiceNotes ?? '');
+    });
+  }, [id]);
+
+  async function saveInvoiceNotes() {
+    if (!client) return;
+    const trimmed = invoiceNotesDraft.trim();
+    if (trimmed === (client.invoiceNotes ?? '')) return;
+    setSavingNotes(true);
+    try {
+      const updated = await updateClient(client.id, { invoiceNotes: trimmed || null });
+      setClient(prev => prev ? { ...prev, invoiceNotes: updated.invoiceNotes } : prev);
+    } finally {
+      setSavingNotes(false);
+    }
+  }
 
   if (!client) return <div className="text-fg-muted">Loading…</div>;
 
@@ -51,6 +75,23 @@ export default function ClientDetail() {
         {client.notes && (
           <p className="text-fg-secondary text-sm mt-4 border-t border-border pt-4">{client.notes}</p>
         )}
+      </div>
+
+      {/* Invoice submission instructions */}
+      <div className="bg-surface border border-border rounded-xl p-5 mb-6">
+        <div className="flex items-center gap-2 mb-3">
+          <FileText size={14} className="text-fg-muted" />
+          <h2 className="text-sm font-medium text-fg">Invoice submission</h2>
+        </div>
+        <textarea
+          value={invoiceNotesDraft}
+          onChange={e => setInvoiceNotesDraft(e.target.value)}
+          onBlur={saveInvoiceNotes}
+          rows={4}
+          placeholder="How should invoices be submitted? (e.g. email billing@company.com, upload to portal at…, use their billing system…)"
+          className="w-full bg-canvas border border-border rounded-lg px-3 py-2 text-sm text-fg placeholder:text-fg-muted focus:outline-none focus:border-brand resize-none"
+        />
+        {savingNotes && <p className="text-xs text-fg-muted mt-1">Saving…</p>}
       </div>
 
       <div>

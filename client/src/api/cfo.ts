@@ -1,6 +1,6 @@
 import api from './client';
 import type {
-  CfoClient, CfoInvoice, CfoTransaction, CfoExpense,
+  CfoClient, CfoInvoice, CfoInvoiceAttachment, CfoTransaction, CfoExpense,
   CfoBudgetTarget, BudgetActual, CfoTaxPayment, TaxEstimate, CfoDashboard,
 } from '@contractor-cfo/shared';
 
@@ -25,7 +25,7 @@ export const getInvoices = (params?: { status?: string; clientId?: number; year?
   api.get<CfoInvoice[]>('/cfo/invoices', { params }).then(r => r.data);
 export const getInvoice = (id: number) =>
   api.get<CfoInvoice>(`/cfo/invoices/${id}`).then(r => r.data);
-export const createInvoice = (body: Partial<CfoInvoice> & { lineItems?: { description: string; quantity: number; unitPrice: number }[] }) =>
+export const createInvoice = (body: Omit<Partial<CfoInvoice>, 'lineItems'> & { lineItems?: { description: string; quantity: number; unitPrice: number; sortOrder?: number }[] }) =>
   api.post<CfoInvoice>('/cfo/invoices', body).then(r => r.data);
 export const updateInvoice = (id: number, body: Partial<CfoInvoice>) =>
   api.put<CfoInvoice>(`/cfo/invoices/${id}`, body).then(r => r.data);
@@ -33,6 +33,18 @@ export const markInvoiceSent = (id: number) =>
   api.patch<CfoInvoice>(`/cfo/invoices/${id}/send`).then(r => r.data);
 export const voidInvoice = (id: number) =>
   api.patch<CfoInvoice>(`/cfo/invoices/${id}/void`).then(r => r.data);
+export const getInvoicePdfUrl = (id: number) => `/api/cfo/invoices/${id}/pdf`;
+export const listAttachments = (invoiceId: number) =>
+  api.get<CfoInvoiceAttachment[]>(`/cfo/invoices/${invoiceId}/attachments`).then(r => r.data);
+export const uploadAttachment = (invoiceId: number, file: File) => {
+  const form = new FormData();
+  form.append('file', file);
+  return api.post<CfoInvoiceAttachment>(`/cfo/invoices/${invoiceId}/attachments`, form).then(r => r.data);
+};
+export const downloadAttachmentUrl = (invoiceId: number, attachmentId: number) =>
+  `/api/cfo/invoices/${invoiceId}/attachments/${attachmentId}`;
+export const deleteAttachment = (invoiceId: number, attachmentId: number) =>
+  api.delete(`/cfo/invoices/${invoiceId}/attachments/${attachmentId}`);
 
 // Transactions
 export const getTransactions = (params?: { year?: number; invoiceId?: number }) =>
@@ -79,7 +91,7 @@ export const deleteToken = (id: number) =>
 // Household
 export const getHousehold = () =>
   api.get('/household').then(r => r.data);
-export const updateHousehold = (body: { name?: string; stateRate?: number | null; filingStatus?: string; priorYearTax?: number | null; otherIncome?: number | null }) =>
+export const updateHousehold = (body: { name?: string; state?: string | null; stateRate?: number | null; filingStatus?: string; priorYearTax?: number | null; otherIncome?: number | null }) =>
   api.put('/household', body).then(r => r.data);
 export const inviteMember = (email: string) =>
   api.post('/household/invite', { email }).then(r => r.data);

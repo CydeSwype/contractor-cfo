@@ -8,6 +8,7 @@ import Clients from './pages/Clients';
 import ClientDetail from './pages/ClientDetail';
 import Invoices from './pages/Invoices';
 import InvoiceDetail from './pages/InvoiceDetail';
+import NewInvoice from './pages/NewInvoice';
 import Expenses from './pages/Expenses';
 import Budget from './pages/Budget';
 import Taxes from './pages/Taxes';
@@ -38,6 +39,7 @@ export default function App() {
           <Route path="clients" element={<Clients />} />
           <Route path="clients/:id" element={<ClientDetail />} />
           <Route path="invoices" element={<Invoices />} />
+          <Route path="invoices/new" element={<NewInvoice />} />
           <Route path="invoices/:id" element={<InvoiceDetail />} />
           <Route path="expenses" element={<Expenses />} />
           <Route path="budget" element={<Budget />} />

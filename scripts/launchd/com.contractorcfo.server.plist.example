@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>Label</key>
+    <string>com.contractorcfo.server</string>
+
+    <key>UserName</key>
+    <string>your-macos-username</string>
+
+    <key>WorkingDirectory</key>
+    <string>/path/to/contractor-cfo</string>
+
+    <key>ProgramArguments</key>
+      <array>
+         <string>/opt/homebrew/bin/npm</string>
+         <string>run</string>
+         <string>dev:server</string>
+      </array>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+      <key>HOME</key>
+      <string>/Users/your-macos-username</string>
+      <key>PATH</key>
+      <string>/opt/homebrew/bin:/opt/homebrew/sbin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>ThrottleInterval</key>
+    <integer>5</integer>
+
+    <key>StandardOutPath</key>
+    <string>/Users/your-macos-username/Library/Logs/contractor-cfo-server.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/your-macos-username/Library/Logs/contractor-cfo-server.err.log</string>
+  </dict>
+</plist>

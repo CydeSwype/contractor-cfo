@@ -12,6 +12,7 @@ export interface User {
 export interface Household {
   id: number;
   name: string;
+  state: string | null;
   stateRate: string | null;
   filingStatus: FilingStatus;
   priorYearTax: string | null;
@@ -37,6 +38,7 @@ export interface CfoClient {
   contactPhone: string | null;
   hourlyRate: string | null;
   notes: string | null;
+  invoiceNotes: string | null;
   archivedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -52,6 +54,16 @@ export interface CfoLineItem {
   unitPrice: string;
   amount: string;
   sortOrder: number;
+}
+
+export interface CfoInvoiceAttachment {
+  id: number;
+  invoiceId: number;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number | null;
+  source: 'generated' | 'upload';
+  createdAt: string;
 }
 
 export interface CfoInvoice {

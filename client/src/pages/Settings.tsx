@@ -1,11 +1,13 @@
 import { useEffect, useState, FormEvent } from 'react';
 import { Plus, Trash2, Copy, Check } from 'lucide-react';
 import { getHousehold, updateHousehold, inviteMember, getTokens, createToken, deleteToken } from '../api/cfo';
+import { STATE_TAX_RATES, getStateInfo } from '@contractor-cfo/shared';
 
 interface Token { id: number; name: string; lastUsedAt: string | null; createdAt: string; token?: string }
 
 interface HouseholdState {
   name: string;
+  state: string | null;
   stateRate: string | null;
   filingStatus: string;
   priorYearTax: string | null;
@@ -33,7 +35,7 @@ export default function Settings() {
     if (!household) return;
     const updated = await updateHousehold({
       name: household.name,
-      stateRate: household.stateRate ? parseFloat(household.stateRate) : null,
+      state: household.state,
       filingStatus: household.filingStatus,
       priorYearTax: household.priorYearTax ? parseFloat(household.priorYearTax) : null,
       otherIncome: household.otherIncome ? parseFloat(household.otherIncome) : null,
@@ -89,12 +91,25 @@ export default function Settings() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-fg-secondary mb-1">State tax rate (%)</label>
-                <input type="number" step="0.1" min="0" max="20"
-                  value={household.stateRate ? (parseFloat(household.stateRate) * 100).toFixed(1) : ''}
-                  onChange={e => setHousehold(h => h ? { ...h, stateRate: e.target.value ? String(parseFloat(e.target.value) / 100) : null } : h)}
-                  placeholder="e.g. 9.3 for CA"
-                  className="w-full bg-canvas border border-border rounded-lg px-3 py-2 text-fg text-sm focus:outline-none focus:border-brand" />
+                <label className="block text-xs text-fg-secondary mb-1">State</label>
+                <select value={household.state ?? ''}
+                  onChange={e => setHousehold(h => h ? { ...h, state: e.target.value || null } : h)}
+                  className="w-full bg-canvas border border-border rounded-lg px-3 py-2 text-fg text-sm focus:outline-none focus:border-brand">
+                  <option value="">Select state…</option>
+                  {STATE_TAX_RATES.map(s => (
+                    <option key={s.code} value={s.code}>{s.name}</option>
+                  ))}
+                </select>
+                {(() => {
+                  const info = getStateInfo(household.state);
+                  if (!info) return <p className="text-xs text-fg-muted mt-1">We'll apply the state's tax rate automatically.</p>;
+                  return (
+                    <p className="text-xs text-fg-muted mt-1">
+                      Est. state rate <span className="text-fg-secondary">{(info.rate * 100).toFixed(2)}%</span>
+                      {info.hasLocalIncomeTax && ' · local city/county tax may also apply'}
+                    </p>
+                  );
+                })()}
               </div>
               <div>
                 <label className="block text-xs text-fg-secondary mb-1">Filing status</label>

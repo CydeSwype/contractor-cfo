@@ -26,6 +26,7 @@ model User {
 model Household {
   id           Int       @id @default(autoincrement())
   name         String
+  state        String?   // USPS code, e.g. "CA"; stateRate is derived from this
   stateRate    Decimal?  @db.Decimal(5, 4) // e.g. 0.0930 for CA 9.3%
   filingStatus  String    @default("single") // single | mfj | mfs | hoh
   priorYearTax  Decimal?  @db.Decimal(10, 2)
@@ -80,6 +81,7 @@ model CfoClient {
   contactPhone String?
   hourlyRate   Decimal?   @db.Decimal(10, 2)
   notes        String?
+  invoiceNotes String?   // how to submit invoices for this client
   archivedAt   DateTime?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
@@ -108,6 +110,7 @@ model CfoInvoice {
   client        CfoClient      @relation(fields: [clientId], references: [id])
   lineItems     CfoLineItem[]
   transactions  CfoTransaction[]
+  attachments   CfoInvoiceAttachment[]
 
   @@unique([householdId, invoiceNumber])
   @@index([householdId, status])
@@ -181,6 +184,20 @@ model CfoBudgetTarget {
 
   @@unique([householdId, yearMonth, category])
   @@index([householdId, yearMonth])
+}
+
+model CfoInvoiceAttachment {
+  id          Int        @id @default(autoincrement())
+  invoiceId   Int
+  invoice     CfoInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  filename    String
+  mimeType    String     @default("application/pdf")
+  storedPath  String
+  sizeBytes   Int?
+  source      String     @default("upload") // generated | upload
+  createdAt   DateTime   @default(now())
+
+  @@index([invoiceId])
 }
 
 model CfoTaxPayment {

@@ -1,6 +1,7 @@
 import { useEffect, useState, FormEvent } from 'react';
 import { CheckCircle, Circle, Plus } from 'lucide-react';
 import { getTaxEstimate, getTaxPayments, createTaxPayment } from '../api/cfo';
+import DateField from '../components/DateField';
 import type { TaxEstimate, CfoTaxPayment } from '@contractor-cfo/shared';
 
 function fmt(n: number) {
@@ -185,9 +186,10 @@ export default function Taxes() {
             </div>
             <div>
               <label className="block text-xs text-fg-secondary mb-1">Date paid</label>
-              <input type="date" value={payForm.paidDate}
-                onChange={e => setPayForm(f => ({ ...f, paidDate: e.target.value }))}
-                className="w-full bg-canvas border border-border rounded-lg px-3 py-2 text-fg text-sm focus:outline-none focus:border-brand" />
+              <DateField
+                value={payForm.paidDate}
+                onChange={v => setPayForm(f => ({ ...f, paidDate: v ?? f.paidDate }))}
+              />
             </div>
           </div>
           <div className="flex gap-2">

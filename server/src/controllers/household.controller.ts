@@ -1,5 +1,6 @@
 import { Response } from 'express';
 import { randomBytes } from 'crypto';
+import { getStateRate } from '@contractor-cfo/shared';
 import { AuthRequest } from '../middleware/auth.middleware';
 import prisma from '../db';
 
@@ -27,18 +28,30 @@ export async function updateHousehold(req: AuthRequest, res: Response): Promise<
   const { householdId } = req.user!;
   if (!householdId) { res.status(400).json({ error: 'No household' }); return; }
 
-  const { name, stateRate, filingStatus, priorYearTax, otherIncome } = req.body as {
+  const { name, state, stateRate, filingStatus, priorYearTax, otherIncome } = req.body as {
     name?: string;
+    state?: string | null;
     stateRate?: number | null;
     filingStatus?: string;
     priorYearTax?: number | null;
     otherIncome?: number | null;
   };
 
+  // When a state is provided we derive stateRate from the lookup table so the two
+  // never drift. An explicit stateRate (e.g. from the MCP tools) still wins if sent.
+  const derivedStateRate =
+    state !== undefined && stateRate === undefined
+      ? state
+        ? getStateRate(state)
+        : null
+      : undefined;
+
   const household = await prisma.household.update({
     where: { id: householdId },
     data: {
       ...(name !== undefined && { name }),
+      ...(state !== undefined && { state: state || null }),
+      ...(derivedStateRate !== undefined && { stateRate: derivedStateRate }),
       ...(stateRate !== undefined && { stateRate }),
       ...(filingStatus !== undefined && { filingStatus }),
       ...(priorYearTax !== undefined && { priorYearTax }),

@@ -11,7 +11,9 @@ if (!process.env.JWT_SECRET) {
 }
 
 const app = express();
-const PORT = process.env.PORT ?? 3000;
+// Derived deterministically from the project name — see scripts/ports.mjs
+// (`node scripts/ports.mjs`). PORT in server/.env is the canonical override.
+const PORT = process.env.PORT ?? 32161;
 
 app.use(cors());
 app.use(express.json());

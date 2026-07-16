@@ -10,6 +10,10 @@ import { listExpenses, createExpense, updateExpense, deleteExpense } from '../co
 import { getBudgetTargets, upsertBudgetTargets, getBudgetVsActuals } from '../controllers/cfo/budget.controller';
 import { getTaxEstimate, listTaxPayments, createTaxPayment, updateTaxPayment, deleteTaxPayment } from '../controllers/cfo/taxes.controller';
 import { getDashboard } from '../controllers/cfo/dashboard.controller';
+import {
+  getInvoicePdf, listAttachments, uploadAttachment, downloadAttachment, deleteAttachment,
+  uploadMiddleware,
+} from '../controllers/cfo/attachments.controller';
 import { asyncHandler } from '../utils/asyncHandler';
 
 const router = Router();
@@ -35,6 +39,11 @@ router.patch('/invoices/:id/void', asyncHandler(voidInvoice));
 router.post('/invoices/:id/line-items', asyncHandler(addLineItem));
 router.put('/invoices/:id/line-items/:itemId', asyncHandler(updateLineItem));
 router.delete('/invoices/:id/line-items/:itemId', asyncHandler(deleteLineItem));
+router.get('/invoices/:id/pdf', asyncHandler(getInvoicePdf));
+router.get('/invoices/:id/attachments', asyncHandler(listAttachments));
+router.post('/invoices/:id/attachments', uploadMiddleware.single('file'), asyncHandler(uploadAttachment));
+router.get('/invoices/:id/attachments/:attachmentId', asyncHandler(downloadAttachment));
+router.delete('/invoices/:id/attachments/:attachmentId', asyncHandler(deleteAttachment));
 
 // Transactions (income received)
 router.get('/transactions', asyncHandler(listTransactions));

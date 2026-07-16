@@ -4,3 +4,11 @@ dist/
 .env.local
 .mcp.json
 *.tsbuildinfo
+
+# Generated invoice PDFs saved to the repo root by the /invoice skill (contain
+# real client/billing data) — server/uploads/ has its own .gitignore already.
+/*.pdf
+
+# launchd plists are machine-specific (hardcode a username and absolute paths) —
+# copy scripts/launchd/*.plist locally and fill in your own values instead.
+scripts/launchd/*.plist

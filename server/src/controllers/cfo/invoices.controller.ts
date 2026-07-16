@@ -48,8 +48,11 @@ export async function getInvoice(req: AuthRequest, res: Response): Promise<void>
   const householdId = requireHousehold(req, res);
   if (!householdId) return;
 
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) { res.status(400).json({ error: 'Invalid invoice id' }); return; }
+
   const invoice = await prisma.cfoInvoice.findFirst({
-    where: { id: parseInt(req.params.id, 10), householdId },
+    where: { id, householdId },
     include: {
       client: true,
       lineItems: { orderBy: { sortOrder: 'asc' } },
@@ -128,17 +131,40 @@ export async function updateInvoice(req: AuthRequest, res: Response): Promise<vo
   const existing = await prisma.cfoInvoice.findFirst({ where: { id, householdId } });
   if (!existing) { res.status(404).json({ error: 'Invoice not found' }); return; }
 
-  const { issuedAt, dueAt, notes } = req.body as {
-    issuedAt?: string;
-    dueAt?: string;
+  const { issuedAt, dueAt, paidAt, status, notes } = req.body as {
+    issuedAt?: string | null;
+    dueAt?: string | null;
+    paidAt?: string | null;
+    status?: string;
     notes?: string;
   };
+
+  const ALLOWED_STATUSES = ['draft', 'sent', 'paid', 'overdue', 'void'];
+  if (status !== undefined && !ALLOWED_STATUSES.includes(status)) {
+    res.status(400).json({ error: `status must be one of ${ALLOWED_STATUSES.join(', ')}` });
+    return;
+  }
+
+  // Keep status and paidAt consistent when one is changed without the other.
+  // Marking paid stamps paidAt (defaults to now); moving away from paid clears it.
+  let nextStatus = status;
+  let nextPaidAt: Date | null | undefined =
+    paidAt !== undefined ? (paidAt ? new Date(paidAt) : null) : undefined;
+
+  if (status === 'paid' && nextPaidAt === undefined && !existing.paidAt) {
+    nextPaidAt = new Date();
+  }
+  if (status !== undefined && status !== 'paid' && nextPaidAt === undefined) {
+    nextPaidAt = null;
+  }
 
   const invoice = await prisma.cfoInvoice.update({
     where: { id },
     data: {
-      ...(issuedAt !== undefined && { issuedAt: new Date(issuedAt) }),
+      ...(issuedAt !== undefined && { issuedAt: issuedAt ? new Date(issuedAt) : null }),
       ...(dueAt !== undefined && { dueAt: dueAt ? new Date(dueAt) : null }),
+      ...(nextPaidAt !== undefined && { paidAt: nextPaidAt }),
+      ...(nextStatus !== undefined && { status: nextStatus }),
       ...(notes !== undefined && { notes }),
     },
     include: { lineItems: true, client: true },
