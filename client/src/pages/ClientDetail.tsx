@@ -17,11 +17,14 @@ export default function ClientDetail() {
   const [client, setClient] = useState<ClientWithInvoices | null>(null);
   const [invoiceNotesDraft, setInvoiceNotesDraft] = useState('');
   const [savingNotes, setSavingNotes] = useState(false);
+  const [prefixDraft, setPrefixDraft] = useState('');
+  const [savingPrefix, setSavingPrefix] = useState(false);
 
   useEffect(() => {
     if (id) getClient(parseInt(id, 10)).then(c => {
       setClient(c as ClientWithInvoices);
       setInvoiceNotesDraft(c.invoiceNotes ?? '');
+      setPrefixDraft(c.invoiceNumberPrefix ?? '');
     });
   }, [id]);
 
@@ -35,6 +38,20 @@ export default function ClientDetail() {
       setClient(prev => prev ? { ...prev, invoiceNotes: updated.invoiceNotes } : prev);
     } finally {
       setSavingNotes(false);
+    }
+  }
+
+  async function savePrefix() {
+    if (!client) return;
+    const trimmed = prefixDraft.trim().toUpperCase();
+    setPrefixDraft(trimmed);
+    if (trimmed === (client.invoiceNumberPrefix ?? '')) return;
+    setSavingPrefix(true);
+    try {
+      const updated = await updateClient(client.id, { invoiceNumberPrefix: trimmed || null });
+      setClient(prev => prev ? { ...prev, invoiceNumberPrefix: updated.invoiceNumberPrefix } : prev);
+    } finally {
+      setSavingPrefix(false);
     }
   }
 
@@ -92,6 +109,24 @@ export default function ClientDetail() {
           className="w-full bg-canvas border border-border rounded-lg px-3 py-2 text-sm text-fg placeholder:text-fg-muted focus:outline-none focus:border-brand resize-none"
         />
         {savingNotes && <p className="text-xs text-fg-muted mt-1">Saving…</p>}
+
+        <div className="border-t border-border pt-3 mt-4">
+          <label className="block text-xs text-fg-secondary mb-1">Invoice number prefix</label>
+          <input
+            type="text"
+            value={prefixDraft}
+            onChange={e => setPrefixDraft(e.target.value)}
+            onBlur={savePrefix}
+            placeholder="e.g. WF — leave blank to use the shared INV- sequence"
+            className="w-full bg-canvas border border-border rounded-lg px-3 py-2 text-sm text-fg placeholder:text-fg-muted focus:outline-none focus:border-brand"
+          />
+          <p className="text-xs text-fg-muted mt-1">
+            {client.invoiceNumberPrefix
+              ? `New invoices for this client are numbered ${client.invoiceNumberPrefix}-YYYY-NNN.`
+              : 'Unset — new invoices use the shared INV-YYYY-NNN sequence.'}
+            {savingPrefix && ' Saving…'}
+          </p>
+        </div>
       </div>
 
       <div>

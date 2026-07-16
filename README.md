@@ -110,17 +110,87 @@ absolute paths.
 
 ## MCP server (optional)
 
-`packages/mcp` is a stdio MCP server that lets an AI agent read/write your CFO data via
-the API using a Personal Access Token.
+`packages/mcp` is a **stdio** MCP server that runs on your own machine and lets an AI
+agent read/write your CFO data through your locally-running API, authenticated with a
+Personal Access Token (PAT). It only ever talks to `CFO_API_BASE_URL` — nothing about
+your data goes anywhere else, and nothing outside your machine can reach it. Because it
+uses stdio (not a public HTTP endpoint), a sandboxed or remote agent can't launch or
+call it directly — it has to run as a local subprocess of the MCP client (Claude
+Desktop, Claude Code, etc.).
+
+This step requires the repo to already be installed and built — if you haven't run
+Setup above, do `npm install` then `npm run build:shared` first. `build:mcp` also
+builds `packages/shared` for you, but still needs `npm install` to have put `tsc` in
+`node_modules/.bin` beforehand.
 
 ```bash
-npm run build:mcp                                   # builds packages/mcp/dist
+npm run build:mcp                                   # builds packages/mcp/dist (and packages/shared)
 cp .mcp.json.example .mcp.json                      # then fill in CFO_PAT
 ```
 
-Generate a Personal Access Token from the app's **Settings** page (it calls the
-`/api/tokens` endpoint) and paste it into `.mcp.json` as `CFO_PAT`. Point
-`CFO_API_BASE_URL` at your running API (default `http://localhost:32161`).
+Generate a Personal Access Token from the app's **Settings** page and paste it into
+`.mcp.json` as `CFO_PAT`. Point `CFO_API_BASE_URL` at your running API (default
+`http://localhost:32161` — the server must be running locally for the MCP tools to
+work; there is no hosted API to fall back to).
+
+### Token scopes
+
+Give an AI agent the narrowest token that works, especially anything long-lived in an
+MCP config file:
+
+| Scope          | Can read | Can write                                   |
+| -------------- | -------- | -------------------------------------------- |
+| `full`         | Everything | Everything |
+| `invoice_only` | Everything | Only invoices, line items, attachments, and transactions (payments) |
+| `read_only`    | Everything | Nothing |
+
+Pick a scope and an expiry when generating a token in **Settings**. For an invoicing
+agent (the `/invoice` skill, or "bill this client" prompts), `invoice_only` is enough —
+it can create and send invoices and record payments, but can't touch clients, expenses,
+budgets, tax settings, or other tokens. Revoke a token from **Settings** as soon as
+you're done with it rather than leaving it live in a config file indefinitely.
+
+The token itself only ever belongs in `.mcp.json` (git-ignored) or your MCP client's own
+config — never paste it into a chat message. If an agent asks you for one, give it
+somewhere it can read the file itself (or paste it into `.mcp.json` yourself); it
+shouldn't need you to type the raw value into the conversation.
+
+### Connect from Claude Desktop
+
+Claude Desktop reads its own config file, not this repo's `.mcp.json`:
+
+- macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- Windows: `%APPDATA%\Claude\claude_desktop_config.json`
+
+Add a `mcpServers` entry (create the file if it doesn't exist) — `mcpServers` is a
+**top-level key** in this file, not nested under anything else:
+
+```json
+{
+  "mcpServers": {
+    "cfo": {
+      "command": "/usr/local/bin/node",
+      "args": ["/absolute/path/to/contractor-cfo/packages/mcp/dist/index.js"],
+      "env": {
+        "CFO_API_BASE_URL": "http://localhost:32161",
+        "CFO_PAT": "<your-personal-access-token-from-settings>"
+      }
+    }
+  }
+}
+```
+
+Two things that trip people up here, both different from running this repo's own
+`.mcp.json` in an interactive terminal:
+
+- **`args` needs an absolute path** to `packages/mcp/dist/index.js` — Desktop doesn't
+  know this repo's working directory the way a terminal session does.
+- **`command` needs the full path to `node`**, not just `"node"`. Desktop launches MCP
+  servers with a minimal environment that usually doesn't include your shell's PATH
+  (especially if you installed Node via nvm/Volta/Homebrew). Run `which node` in your
+  terminal to find the right path.
+
+Restart Claude Desktop after editing the config for it to pick up the new server.
 
 ## Generating invoices with Claude
 
@@ -156,10 +226,16 @@ Claude follows the same rules for every invoice built from this template:
 - **One line item per day**, combining that day's bullets into a single description
   (`"Jun 15, 2026 — meetings; Commerce SDK planning"`), billed at `quantity = hours`
   and `unitPrice = that client's hourlyRate` — looked up from the API, never guessed.
-- **Invoice numbers and payment terms come from the client's own history**, not the
-  API's generic `INV-YYYY-NNN` auto-numbering. Claude reads the client's most recent
-  invoice to find their prefix (e.g. `WF-2026-NNN`) and terms (e.g. Net 15) and matches
-  them, so every invoice for a given client stays consistent even across sessions.
+- **Invoice numbers follow that client's own registered template, enforced by the API**
+  — not inferred by pattern-matching their invoice history. Set a client's numbering
+  prefix once (in **Settings → that client**, or via `update_client`'s
+  `invoiceNumberPrefix`, e.g. `"WF"` → `WF-2026-NNN`) and every subsequent
+  `create_invoice` call either auto-generates the next number in that sequence or
+  rejects an explicit `invoiceNumber` that doesn't match it — so a mixed history (e.g.
+  some invoices as `INV-YYYY-NNN`, others as `INV-YYYY-MM-NNN`) can't silently
+  propagate into new invoices. A client with no prefix set still falls back to the
+  shared `INV-YYYY-NNN` sequence. Payment terms (e.g. Net 15) aren't enforced the same
+  way — Claude still reads the most recent invoice's `notes` field to match them.
 - **The API is always the source of truth** — client IDs, rates, and invoice history are
   looked up, not fabricated, and the line-item math is checked against the total before
   anything is created.

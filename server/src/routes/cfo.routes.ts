@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticate } from '../middleware/auth.middleware';
+import { authenticate, requireScope } from '../middleware/auth.middleware';
 import { listClients, getClient, createClient, updateClient, archiveClient } from '../controllers/cfo/clients.controller';
 import {
   listInvoices, getInvoice, createInvoice, updateInvoice,
@@ -18,6 +18,10 @@ import { asyncHandler } from '../utils/asyncHandler';
 
 const router = Router();
 router.use(authenticate);
+// invoice_only-scoped tokens may write under these prefixes; read_only tokens never
+// write at all. See the /invoice skill and README's "Token scopes" section for the
+// intended use — a narrowly-scoped PAT for an invoicing agent.
+router.use(requireScope(['/invoices', '/transactions'], ['/taxes/estimate']));
 
 // Dashboard
 router.get('/dashboard', asyncHandler(getDashboard));

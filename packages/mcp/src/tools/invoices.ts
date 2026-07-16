@@ -42,7 +42,13 @@ export function registerInvoiceTools(server: McpServer) {
     'Create a new invoice for a client, with optional line items.',
     {
       clientId: z.number().int().positive(),
-      invoiceNumber: z.string().optional().describe('Auto-generated as INV-YYYY-NNN if not provided'),
+      invoiceNumber: z.string().optional().describe(
+        'Leave unset to auto-generate: uses the client\'s own invoiceNumberPrefix template ' +
+        '(see update_client) if they have one, otherwise the shared INV-YYYY-NNN sequence. ' +
+        'If you do pass an explicit number and the client has a registered prefix, it must ' +
+        'match that client\'s template or the request is rejected — prefer leaving this unset ' +
+        'rather than inferring a number from past invoices.'
+      ),
       issuedAt: z.string().optional().describe('ISO date string, defaults to today'),
       dueAt: z.string().optional().describe('ISO date string for payment due date'),
       notes: z.string().optional(),

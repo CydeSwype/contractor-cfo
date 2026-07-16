@@ -3,20 +3,26 @@ import { randomBytes, createHash } from 'crypto';
 import { AuthRequest } from '../middleware/auth.middleware';
 import prisma from '../db';
 
+const VALID_SCOPES = ['full', 'read_only', 'invoice_only'];
+
 export async function listTokens(req: AuthRequest, res: Response): Promise<void> {
   const tokens = await prisma.personalAccessToken.findMany({
     where: { userId: req.user!.userId },
-    select: { id: true, name: true, lastUsedAt: true, expiresAt: true, createdAt: true },
+    select: { id: true, name: true, scope: true, lastUsedAt: true, expiresAt: true, createdAt: true },
     orderBy: { createdAt: 'desc' },
   });
   res.json(tokens);
 }
 
 export async function createToken(req: AuthRequest, res: Response): Promise<void> {
-  const { name, expiresAt } = req.body as { name: string; expiresAt?: string };
+  const { name, expiresAt, scope } = req.body as { name: string; expiresAt?: string; scope?: string };
 
   if (!name) {
     res.status(400).json({ error: 'name is required' });
+    return;
+  }
+  if (scope !== undefined && !VALID_SCOPES.includes(scope)) {
+    res.status(400).json({ error: `scope must be one of ${VALID_SCOPES.join(', ')}` });
     return;
   }
 
@@ -28,9 +34,10 @@ export async function createToken(req: AuthRequest, res: Response): Promise<void
       userId: req.user!.userId,
       name,
       tokenHash,
+      scope: scope ?? 'full',
       ...(expiresAt && { expiresAt: new Date(expiresAt) }),
     },
-    select: { id: true, name: true, lastUsedAt: true, expiresAt: true, createdAt: true },
+    select: { id: true, name: true, scope: true, lastUsedAt: true, expiresAt: true, createdAt: true },
   });
 
   // Return the raw token only on creation — it cannot be retrieved again

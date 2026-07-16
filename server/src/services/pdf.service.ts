@@ -46,12 +46,19 @@ const BORDER = '#E5E7EB';
 
 const MARGIN = 50;
 const PAGE_WIDTH = 612; // LETTER
+const PAGE_HEIGHT = 792; // LETTER
 const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2; // 512
+// Bottom of the usable content area — rows and the total/notes block must fit above this.
+const CONTENT_BOTTOM = PAGE_HEIGHT - MARGIN;
 
 const COL_DESC_W = 300;
 const COL_HRS_X = MARGIN + COL_DESC_W + 20;
 const COL_RATE_X = COL_HRS_X + 50;
 const COL_AMT_X = COL_RATE_X + 70;
+const TABLE_HEADER_H = 22;
+// Total + divider + notes are drawn together after the table; reserve enough room
+// that a page break happens before this block rather than mid-block.
+const TOTAL_BLOCK_H = 60;
 
 export function generateInvoicePdf(invoice: InvoiceData): Promise<Buffer> {
   return new Promise((resolve, reject) => {
@@ -102,22 +109,33 @@ export function generateInvoicePdf(invoice: InvoiceData): Promise<Buffer> {
     doc.fontSize(9).fillColor(DARK).text(fmtDate(invoice.dueAt), MARGIN + 120, datesY + 12);
 
     // ── Line items table ─────────────────────────────────────────────────────
+    // Rects/fills don't auto-paginate the way pdfkit's flowing text does, so without
+    // an explicit page-break check here, a row's text can get pushed to the next
+    // page by pdfkit's internal text layout while its background rect stays behind —
+    // producing mismatched or blank pages. We compute each row's height up front and
+    // break the page ourselves before drawing anything for that row.
+    function drawTableHeader(headerY: number): number {
+      doc.rect(MARGIN, headerY, CONTENT_WIDTH, TABLE_HEADER_H).fill(LIGHT_BG);
+      doc.fontSize(8).fillColor(GRAY);
+      doc.text('DESCRIPTION', MARGIN + 4, headerY + 7);
+      doc.text('HRS', COL_HRS_X, headerY + 7);
+      doc.text('RATE', COL_RATE_X, headerY + 7);
+      doc.text('AMOUNT', COL_AMT_X, headerY + 7);
+      return headerY + TABLE_HEADER_H;
+    }
+
     const tableTop = datesY + 45;
-    const headerH = 22;
-
-    doc.rect(MARGIN, tableTop, CONTENT_WIDTH, headerH).fill(LIGHT_BG);
-    doc.fontSize(8).fillColor(GRAY);
-    doc.text('DESCRIPTION', MARGIN + 4, tableTop + 7);
-    doc.text('HRS', COL_HRS_X, tableTop + 7);
-    doc.text('RATE', COL_RATE_X, tableTop + 7);
-    doc.text('AMOUNT', COL_AMT_X, tableTop + 7);
-
-    let y = tableTop + headerH;
+    let y = drawTableHeader(tableTop);
 
     invoice.lineItems.forEach((item, i) => {
       const descH = doc.heightOfString(item.description, { width: COL_DESC_W });
       const rowH = Math.max(descH + 10, 20);
       const rowPad = 5;
+
+      if (y + rowH > CONTENT_BOTTOM) {
+        doc.addPage();
+        y = drawTableHeader(MARGIN);
+      }
 
       if (i % 2 === 1) {
         doc.rect(MARGIN, y, CONTENT_WIDTH, rowH).fill(ALT_BG);
@@ -133,6 +151,14 @@ export function generateInvoicePdf(invoice: InvoiceData): Promise<Buffer> {
     });
 
     // ── Total ────────────────────────────────────────────────────────────────
+    // Keep the divider, total, and notes together rather than letting pdfkit
+    // split them across a page boundary.
+    const notesH = invoice.notes ? doc.heightOfString(invoice.notes, { width: CONTENT_WIDTH }) : 0;
+    if (y + TOTAL_BLOCK_H + notesH > CONTENT_BOTTOM) {
+      doc.addPage();
+      y = MARGIN;
+    }
+
     y += 8;
     doc.moveTo(MARGIN, y).lineTo(MARGIN + CONTENT_WIDTH, y).lineWidth(0.5).stroke(BORDER);
     y += 12;

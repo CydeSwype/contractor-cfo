@@ -40,7 +40,7 @@ export async function createClient(req: AuthRequest, res: Response): Promise<voi
   const householdId = requireHousehold(req, res);
   if (!householdId) return;
 
-  const { name, company, contactEmail, contactPhone, hourlyRate, notes, invoiceNotes } = req.body as {
+  const { name, company, contactEmail, contactPhone, hourlyRate, notes, invoiceNotes, invoiceNumberPrefix } = req.body as {
     name: string;
     company?: string;
     contactEmail?: string;
@@ -48,12 +48,13 @@ export async function createClient(req: AuthRequest, res: Response): Promise<voi
     hourlyRate?: number;
     notes?: string;
     invoiceNotes?: string;
+    invoiceNumberPrefix?: string;
   };
 
   if (!name) { res.status(400).json({ error: 'name is required' }); return; }
 
   const client = await prisma.cfoClient.create({
-    data: { householdId, name, company, contactEmail, contactPhone, hourlyRate, notes, invoiceNotes },
+    data: { householdId, name, company, contactEmail, contactPhone, hourlyRate, notes, invoiceNotes, invoiceNumberPrefix },
   });
   res.status(201).json(client);
 }
@@ -66,7 +67,7 @@ export async function updateClient(req: AuthRequest, res: Response): Promise<voi
   const existing = await prisma.cfoClient.findFirst({ where: { id, householdId } });
   if (!existing) { res.status(404).json({ error: 'Client not found' }); return; }
 
-  const { name, company, contactEmail, contactPhone, hourlyRate, notes, invoiceNotes } = req.body as {
+  const { name, company, contactEmail, contactPhone, hourlyRate, notes, invoiceNotes, invoiceNumberPrefix } = req.body as {
     name?: string;
     company?: string;
     contactEmail?: string;
@@ -74,11 +75,12 @@ export async function updateClient(req: AuthRequest, res: Response): Promise<voi
     hourlyRate?: number | null;
     notes?: string;
     invoiceNotes?: string | null;
+    invoiceNumberPrefix?: string | null;
   };
 
   const client = await prisma.cfoClient.update({
     where: { id },
-    data: { name, company, contactEmail, contactPhone, hourlyRate, notes, invoiceNotes },
+    data: { name, company, contactEmail, contactPhone, hourlyRate, notes, invoiceNotes, invoiceNumberPrefix },
   });
   res.json(client);
 }

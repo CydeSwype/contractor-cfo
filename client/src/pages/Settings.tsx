@@ -3,7 +3,14 @@ import { Plus, Trash2, Copy, Check } from 'lucide-react';
 import { getHousehold, updateHousehold, inviteMember, getTokens, createToken, deleteToken } from '../api/cfo';
 import { STATE_TAX_RATES, getStateInfo } from '@contractor-cfo/shared';
 
-interface Token { id: number; name: string; lastUsedAt: string | null; createdAt: string; token?: string }
+type TokenScope = 'full' | 'read_only' | 'invoice_only';
+interface Token { id: number; name: string; scope: TokenScope; lastUsedAt: string | null; createdAt: string; token?: string }
+
+const SCOPE_LABELS: Record<TokenScope, string> = {
+  full: 'Full access',
+  read_only: 'Read-only',
+  invoice_only: 'Invoices only',
+};
 
 interface HouseholdState {
   name: string;
@@ -23,6 +30,7 @@ export default function Settings() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteUrl, setInviteUrl] = useState('');
   const [tokenName, setTokenName] = useState('');
+  const [tokenScope, setTokenScope] = useState<TokenScope>('full');
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
@@ -55,10 +63,11 @@ export default function Settings() {
   async function handleCreateToken(e: FormEvent) {
     e.preventDefault();
     if (!tokenName) return;
-    const result = await createToken(tokenName);
+    const result = await createToken(tokenName, undefined, tokenScope);
     setNewToken(result.token);
     setTokens(ts => [result, ...ts]);
     setTokenName('');
+    setTokenScope('full');
   }
 
   async function handleDeleteToken(id: number) {
@@ -185,7 +194,12 @@ export default function Settings() {
       {/* API Tokens */}
       <section>
         <h2 className="text-sm font-medium text-fg mb-1">API Tokens</h2>
-        <p className="text-xs text-fg-muted mb-4">Generate a Personal Access Token to use with Claude Desktop or ChatGPT.</p>
+        <p className="text-xs text-fg-muted mb-4">
+          Generate a Personal Access Token to use with Claude Desktop, ChatGPT, or this
+          project's MCP server. Prefer the narrowest scope that works and a short
+          expiry for anything handed to an AI agent — see the README's "Token scopes"
+          section for guidance.
+        </p>
 
         {newToken && (
           <div className="bg-warning/10 border border-warning/30 rounded-xl p-4 mb-4">
@@ -203,6 +217,12 @@ export default function Settings() {
           <input type="text" value={tokenName} onChange={e => setTokenName(e.target.value)}
             placeholder='Token name, e.g. "Claude Desktop"'
             className="flex-1 bg-canvas border border-border rounded-lg px-3 py-2 text-fg text-sm focus:outline-none focus:border-brand placeholder:text-fg-muted" />
+          <select value={tokenScope} onChange={e => setTokenScope(e.target.value as TokenScope)}
+            className="bg-canvas border border-border rounded-lg px-3 py-2 text-fg text-sm focus:outline-none focus:border-brand">
+            <option value="full">Full access</option>
+            <option value="invoice_only">Invoices only</option>
+            <option value="read_only">Read-only</option>
+          </select>
           <button type="submit" className="flex items-center gap-2 bg-brand text-white rounded-lg px-4 py-2 text-sm font-medium hover:opacity-90">
             <Plus size={14} />
             Generate
@@ -214,6 +234,7 @@ export default function Settings() {
             <div key={tok.id} className="flex items-center justify-between bg-surface border border-border rounded-xl px-4 py-3 text-sm">
               <div>
                 <span className="text-fg">{tok.name}</span>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-border text-fg-muted ml-2">{SCOPE_LABELS[tok.scope]}</span>
                 {tok.lastUsedAt && <span className="text-fg-muted text-xs ml-2">last used {new Date(tok.lastUsedAt).toLocaleDateString()}</span>}
               </div>
               <button onClick={() => handleDeleteToken(tok.id)} className="text-danger hover:text-danger/70">

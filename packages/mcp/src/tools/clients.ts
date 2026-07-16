@@ -23,6 +23,12 @@ export function registerClientTools(server: McpServer) {
       contactPhone: z.string().optional(),
       hourlyRate: z.number().positive().optional().describe('Default hourly billing rate in USD'),
       notes: z.string().optional(),
+      invoiceNumberPrefix: z.string().optional().describe(
+        'Invoice numbering template prefix for this client, e.g. "WF" → WF-2026-001. ' +
+        'If unset, this client\'s invoices use the shared INV-YYYY-NNN sequence. Setting ' +
+        'this makes create_invoice generate and validate numbers against this client\'s ' +
+        'own template instead of an agent having to infer the scheme from past invoices.'
+      ),
     },
     async (body) => {
       const { data } = await api.post('/cfo/clients', body);
@@ -41,6 +47,9 @@ export function registerClientTools(server: McpServer) {
       contactPhone: z.string().optional(),
       hourlyRate: z.number().positive().optional(),
       notes: z.string().optional(),
+      invoiceNumberPrefix: z.string().optional().describe(
+        'Invoice numbering template prefix for this client, e.g. "WF" → WF-2026-001.'
+      ),
     },
     async ({ id, ...body }) => {
       const { data } = await api.put(`/cfo/clients/${id}`, body);

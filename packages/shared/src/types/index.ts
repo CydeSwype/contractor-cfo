@@ -21,9 +21,12 @@ export interface Household {
   members: User[];
 }
 
+export type TokenScope = 'full' | 'read_only' | 'invoice_only';
+
 export interface PersonalAccessToken {
   id: number;
   name: string;
+  scope: TokenScope;
   lastUsedAt: string | null;
   expiresAt: string | null;
   createdAt: string;
@@ -39,6 +42,7 @@ export interface CfoClient {
   hourlyRate: string | null;
   notes: string | null;
   invoiceNotes: string | null;
+  invoiceNumberPrefix: string | null;
   archivedAt: string | null;
   createdAt: string;
   updatedAt: string;

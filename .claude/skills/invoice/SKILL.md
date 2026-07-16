@@ -20,10 +20,12 @@ rates, or client details; always look them up.
 
 Read `.mcp.json` in the repo root and pull `mcpServers.cfo.env.CFO_API_BASE_URL`
 and `CFO_PAT`. If the file or the token is missing, ask the user to generate a
-Personal Access Token from the app's Settings page and paste it — then save
-it into `.mcp.json` (create from `.mcp.json.example` if needed) so future runs
-don't need to ask again. Never print the raw token in your response or store
-it anywhere other than `.mcp.json` (it's git-ignored).
+Personal Access Token from the app's Settings page — an **`invoice_only`**
+scope covers everything this skill does (create/send invoices, record
+payments) without granting access to clients, expenses, or tax settings — and
+paste it in. Save it into `.mcp.json` (create from `.mcp.json.example` if
+needed) so future runs don't need to ask again. Never print the raw token in
+your response or store it anywhere other than `.mcp.json` (it's git-ignored).
 
 If the server isn't reachable at that base URL, start it: this repo derives
 its dev port deterministically (`node scripts/ports.mjs`), and there's a
@@ -33,17 +35,27 @@ it, or tell the user to run `npm run dev:server`.
 ## 2. Resolve the client
 
 `GET {base}/cfo/clients` (Bearer auth). Match by name (case-insensitive,
-partial ok). Pull `id`, `hourlyRate`, and `invoiceNotes`/`notes` (payment
-terms, mailing address). If no match or ambiguous, list the options and ask.
+partial ok). Pull `id`, `hourlyRate`, `invoiceNumberPrefix`, and
+`invoiceNotes`/`notes` (payment terms, mailing address). If no match or
+ambiguous, list the options and ask.
 
 ## 3. Determine the invoice number and dates
 
-`GET {base}/cfo/invoices?clientId={id}` and sort by invoice number. This
-project's invoices are NOT auto-numbered per client (the API's
-auto-generator uses a shared `INV-YYYY-NNN` sequence) — each client instead
-has its own prefix (e.g. `WF-2026-NNN`). Read the prefix and last sequence
-number from the most recent invoice for this client and increment it. If
-this is the client's first invoice, ask the user what number/prefix to use.
+**Leave `invoiceNumber` unset on the create call** (step 5) and let the API
+generate it — this is the source of truth now, not something to infer.
+
+- If the client has `invoiceNumberPrefix` set (e.g. `"WF"`), the API
+  generates the next number in that client's own `WF-YYYY-NNN` sequence and
+  will reject a mismatched explicit number if you pass one anyway.
+- If `invoiceNumberPrefix` is null, the API falls back to the shared
+  `INV-YYYY-NNN` sequence. This is a legacy/unconfigured client — after
+  creating the invoice, suggest to the user that they set a prefix for this
+  client (via `update_client` or Settings → that client) so future invoices
+  don't depend on inferring a scheme from history.
+- Only fall back to reading `GET {base}/cfo/invoices?clientId={id}` and
+  inferring a number yourself if the API rejects the auto-generated number
+  for some reason you can't resolve (it shouldn't) — don't do this as the
+  default path anymore.
 
 - `issuedAt`: today's date, unless the user specifies otherwise.
 - `dueAt`: default to Net 15 from `issuedAt` unless the client's notes or a
@@ -74,9 +86,10 @@ year boundary). Skip blank days. Sort line items by date ascending.
 
 ## 5. Create the invoice
 
-`POST {base}/cfo/invoices` with `{ clientId, invoiceNumber, issuedAt, dueAt,
-notes, lineItems }`. Set `notes` to something like `"Net 15. Service period
-<first date>–<last date>, <year>."` matching the client's prior style.
+`POST {base}/cfo/invoices` with `{ clientId, issuedAt, dueAt, notes,
+lineItems }` — omit `invoiceNumber` per step 3 so the API generates it. Set
+`notes` to something like `"Net 15. Service period <first date>–<last
+date>, <year>."` matching the client's prior style.
 
 Show the returned `total` and sanity-check it: sum(quantity × unitPrice)
 across your line items should match — recompute by hand if in doubt before

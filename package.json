@@ -6,7 +6,7 @@
     "dev:server": "npm run dev --workspace=server",
     "dev:client": "npm run dev --workspace=client",
     "build:shared": "npm run build --workspace=packages/shared",
-    "build:mcp": "npm run build --workspace=packages/mcp",
+    "build:mcp": "npm run build:shared && npm run build --workspace=packages/mcp",
     "typecheck": "npm run typecheck --workspaces --if-present"
   }
 }

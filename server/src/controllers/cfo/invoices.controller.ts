@@ -2,7 +2,7 @@ import { Response } from 'express';
 import { Prisma } from '@prisma/client';
 import { AuthRequest } from '../../middleware/auth.middleware';
 import prisma from '../../db';
-import { recalculateInvoiceTotals, nextInvoiceNumber } from '../../services/cfo.service';
+import { recalculateInvoiceTotals, nextInvoiceNumber, validateInvoiceNumber } from '../../services/cfo.service';
 
 function requireHousehold(req: AuthRequest, res: Response): number | null {
   const { householdId } = req.user!;
@@ -82,7 +82,12 @@ export async function createInvoice(req: AuthRequest, res: Response): Promise<vo
   const client = await prisma.cfoClient.findFirst({ where: { id: clientId, householdId } });
   if (!client) { res.status(400).json({ error: 'Client not found' }); return; }
 
-  const number = invoiceNumber ?? (await nextInvoiceNumber(householdId));
+  if (invoiceNumber) {
+    const validationError = await validateInvoiceNumber(householdId, clientId, invoiceNumber);
+    if (validationError) { res.status(400).json({ error: validationError }); return; }
+  }
+
+  const number = invoiceNumber ?? (await nextInvoiceNumber(householdId, clientId));
 
   const invoice = await prisma.cfoInvoice.create({
     data: {

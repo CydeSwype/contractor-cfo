@@ -83,8 +83,8 @@ export const updateTaxPayment = (id: number, body: Partial<CfoTaxPayment>) =>
 // Auth / Tokens
 export const getTokens = () =>
   api.get('/tokens').then(r => r.data);
-export const createToken = (name: string, expiresAt?: string) =>
-  api.post('/tokens', { name, expiresAt }).then(r => r.data);
+export const createToken = (name: string, expiresAt?: string, scope?: 'full' | 'read_only' | 'invoice_only') =>
+  api.post('/tokens', { name, expiresAt, scope }).then(r => r.data);
 export const deleteToken = (id: number) =>
   api.delete(`/tokens/${id}`);
 
