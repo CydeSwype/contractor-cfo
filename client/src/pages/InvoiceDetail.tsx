@@ -85,12 +85,12 @@ export default function InvoiceDetail() {
       </Link>
 
       <div className="bg-surface border border-border rounded-xl p-6 mb-4">
-        <div className="flex items-start justify-between mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
           <div>
             <h1 className="text-xl font-semibold text-fg">{invoice.invoiceNumber}</h1>
             {client && <p className="text-fg-secondary text-sm mt-1">{client.name}{client.company ? ` · ${client.company}` : ''}</p>}
           </div>
-          <div className="flex items-center gap-2 flex-wrap justify-end">
+          <div className="flex items-center gap-2 flex-wrap sm:justify-end">
             <span className={`text-xs px-3 py-1 rounded-full ${
               invoice.status === 'paid' ? 'bg-success/15 text-success'
               : invoice.status === 'sent' ? 'bg-brand/15 text-brand'
@@ -138,7 +138,7 @@ export default function InvoiceDetail() {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-3 mb-5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
           <div>
             <label className="block text-xs text-fg-secondary mb-1">Issued</label>
             <DateField
@@ -170,26 +170,28 @@ export default function InvoiceDetail() {
         </div>
 
         {lineItems.length > 0 && (
-          <table className="w-full text-sm mb-4">
-            <thead>
-              <tr className="text-fg-muted border-b border-border">
-                <th className="text-left py-2 font-normal">Description</th>
-                <th className="text-right py-2 font-normal">Qty</th>
-                <th className="text-right py-2 font-normal">Rate</th>
-                <th className="text-right py-2 font-normal">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {lineItems.map(item => (
-                <tr key={item.id} className="border-b border-border/50">
-                  <td className="py-2 text-fg">{item.description}</td>
-                  <td className="py-2 text-fg-secondary text-right">{parseFloat(item.quantity).toFixed(1)}</td>
-                  <td className="py-2 text-fg-secondary text-right">{fmt(item.unitPrice)}</td>
-                  <td className="py-2 text-fg text-right">{fmt(item.amount)}</td>
+          <div className="overflow-x-auto mb-4">
+            <table className="w-full text-sm min-w-[420px]">
+              <thead>
+                <tr className="text-fg-muted border-b border-border">
+                  <th className="text-left py-2 font-normal">Description</th>
+                  <th className="text-right py-2 font-normal">Qty</th>
+                  <th className="text-right py-2 font-normal">Rate</th>
+                  <th className="text-right py-2 font-normal">Amount</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {lineItems.map(item => (
+                  <tr key={item.id} className="border-b border-border/50">
+                    <td className="py-2 text-fg">{item.description}</td>
+                    <td className="py-2 text-fg-secondary text-right">{parseFloat(item.quantity).toFixed(1)}</td>
+                    <td className="py-2 text-fg-secondary text-right">{fmt(item.unitPrice)}</td>
+                    <td className="py-2 text-fg text-right">{fmt(item.amount)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
 
         <div className="flex justify-end">

@@ -56,7 +56,7 @@ export default function Expenses() {
 
   return (
     <div className="max-w-3xl">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-fg">Expenses</h1>
           <p className="text-fg-muted text-sm mt-1">
@@ -65,7 +65,7 @@ export default function Expenses() {
         </div>
         <button
           onClick={() => setShowForm(v => !v)}
-          className="flex items-center gap-2 bg-brand text-white rounded-lg px-4 py-2 text-sm font-medium hover:opacity-90"
+          className="flex items-center justify-center gap-2 bg-brand text-white rounded-lg px-4 py-2 text-sm font-medium hover:opacity-90"
         >
           <Plus size={16} />
           Add expense
@@ -75,7 +75,7 @@ export default function Expenses() {
       {showForm && (
         <form onSubmit={handleCreate} className="bg-surface border border-border rounded-xl p-5 mb-6 space-y-3">
           <h2 className="text-sm font-medium text-fg mb-2">New expense</h2>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-fg-secondary mb-1">Category</label>
               <select
@@ -93,7 +93,7 @@ export default function Expenses() {
                 onChange={v => setForm(f => ({ ...f, expenseDate: v ?? f.expenseDate }))}
               />
             </div>
-            <div className="col-span-2">
+            <div className="sm:col-span-2">
               <label className="block text-xs text-fg-secondary mb-1">Description *</label>
               <input type="text" value={form.description} required
                 onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
@@ -141,7 +141,7 @@ export default function Expenses() {
       <div className="space-y-2">
         {expenses.length === 0 && <p className="text-fg-muted text-sm py-8 text-center">No expenses logged yet.</p>}
         {expenses.map(exp => (
-          <div key={exp.id} className="flex items-center justify-between bg-surface border border-border rounded-xl px-5 py-3">
+          <div key={exp.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 bg-surface border border-border rounded-xl px-5 py-3">
             <div>
               <div className="text-fg text-sm font-medium">{exp.description}</div>
               <div className="text-fg-muted text-xs mt-0.5">

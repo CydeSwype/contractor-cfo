@@ -88,8 +88,8 @@ export default function NewInvoice() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="bg-surface border border-border rounded-xl p-5 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="sm:col-span-2">
               <label className="block text-xs font-medium text-fg-muted mb-1">Client *</label>
               <select
                 value={clientId}
@@ -151,13 +151,13 @@ export default function NewInvoice() {
           <h2 className="text-sm font-medium text-fg mb-3">Line items</h2>
           <div className="space-y-2">
             {lineItems.map((item, i) => (
-              <div key={i} className="flex gap-2 items-start">
+              <div key={i} className="flex flex-wrap gap-2 items-start pb-2 border-b border-border/50 last:border-b-0 sm:border-b-0 sm:pb-0">
                 <input
                   type="text"
                   value={item.description}
                   onChange={e => updateLineItem(i, 'description', e.target.value)}
                   placeholder="Description"
-                  className="flex-1 bg-canvas border border-border rounded-lg px-3 py-2 text-sm text-fg placeholder:text-fg-muted focus:outline-none focus:border-brand"
+                  className="w-full sm:flex-1 bg-canvas border border-border rounded-lg px-3 py-2 text-sm text-fg placeholder:text-fg-muted focus:outline-none focus:border-brand"
                 />
                 <input
                   type="number"
@@ -166,7 +166,7 @@ export default function NewInvoice() {
                   placeholder="Qty"
                   min="0"
                   step="any"
-                  className="w-16 bg-canvas border border-border rounded-lg px-3 py-2 text-sm text-fg focus:outline-none focus:border-brand"
+                  className="w-20 sm:w-16 bg-canvas border border-border rounded-lg px-3 py-2 text-sm text-fg focus:outline-none focus:border-brand"
                 />
                 <input
                   type="number"
@@ -177,7 +177,7 @@ export default function NewInvoice() {
                   step="any"
                   className="w-24 bg-canvas border border-border rounded-lg px-3 py-2 text-sm text-fg focus:outline-none focus:border-brand"
                 />
-                <div className="w-20 py-2 text-sm text-fg-muted text-right">
+                <div className="flex-1 sm:flex-none sm:w-20 py-2 text-sm text-fg-muted text-right">
                   {fmt((parseFloat(item.quantity) || 0) * (parseFloat(item.unitPrice) || 0))}
                 </div>
                 <button
