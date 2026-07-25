@@ -32,11 +32,11 @@ export default function Clients() {
 
   return (
     <div className="max-w-3xl">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <h1 className="text-2xl font-semibold text-fg">Clients</h1>
         <button
           onClick={() => setShowForm(v => !v)}
-          className="flex items-center gap-2 bg-brand text-white rounded-lg px-4 py-2 text-sm font-medium hover:opacity-90"
+          className="flex items-center justify-center gap-2 bg-brand text-white rounded-lg px-4 py-2 text-sm font-medium hover:opacity-90"
         >
           <Plus size={16} />
           New client
@@ -82,7 +82,7 @@ export default function Clients() {
           <Link
             key={client.id}
             to={`/clients/${client.id}`}
-            className="flex items-center justify-between bg-surface border border-border rounded-xl px-5 py-4 hover:border-brand/50 transition-colors"
+            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 bg-surface border border-border rounded-xl px-5 py-4 hover:border-brand/50 transition-colors"
           >
             <div>
               <div className="text-fg font-medium text-sm">{client.name}</div>

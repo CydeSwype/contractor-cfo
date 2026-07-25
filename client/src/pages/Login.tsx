@@ -26,8 +26,8 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-canvas">
-      <div className="w-full max-w-sm bg-surface border border-border rounded-2xl p-8">
+    <div className="min-h-screen flex items-center justify-center bg-canvas px-4">
+      <div className="w-full max-w-sm bg-surface border border-border rounded-2xl p-6 sm:p-8">
         <h1 className="text-2xl font-semibold text-fg mb-1">Sign in</h1>
         <p className="text-fg-muted text-sm mb-6">Contractor CFO</p>
 

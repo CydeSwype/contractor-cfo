@@ -59,7 +59,7 @@ export default function Taxes() {
       </div>
 
       {/* Prior year tax input for safe harbor */}
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-center flex-wrap gap-3 mb-6">
         <label className="text-sm text-fg-secondary whitespace-nowrap">Prior year total tax paid</label>
         <input
           type="number"
@@ -122,7 +122,7 @@ export default function Taxes() {
                 const paid = payments.filter(p => p.quarter === q.quarter);
                 const isPaid = paid.length > 0 && paid.some(p => p.paidDate);
                 return (
-                  <div key={q.quarter} className="flex items-center justify-between bg-surface border border-border rounded-xl px-5 py-3">
+                  <div key={q.quarter} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 bg-surface border border-border rounded-xl px-5 py-3">
                     <div className="flex items-center gap-3">
                       {isPaid
                         ? <CheckCircle size={16} className="text-success" />
@@ -133,7 +133,7 @@ export default function Taxes() {
                         <div className="text-fg-muted text-xs">Due {new Date(q.dueDate).toLocaleDateString()}</div>
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="pl-7 sm:pl-0 sm:text-right">
                       {isPaid
                         ? <span className="text-success text-sm">{fmt(paid.reduce((s, p) => s + parseFloat(p.amount.toString()), 0))} paid</span>
                         : <span className="text-fg-secondary text-sm">{fmt(estimate.perQuarterPayment)}</span>
@@ -161,7 +161,7 @@ export default function Taxes() {
 
       {showPaymentForm && (
         <form onSubmit={handleRecordPayment} className="bg-surface border border-border rounded-xl p-5 mb-4 space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-fg-secondary mb-1">Quarter</label>
               <select value={payForm.quarter} onChange={e => setPayForm(f => ({ ...f, quarter: parseInt(e.target.value) }))}
@@ -204,7 +204,7 @@ export default function Taxes() {
       <div className="space-y-2">
         {payments.length === 0 && <p className="text-fg-muted text-sm py-4 text-center">No payments recorded yet.</p>}
         {payments.map(p => (
-          <div key={p.id} className="flex items-center justify-between bg-surface border border-border rounded-xl px-5 py-3 text-sm">
+          <div key={p.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 bg-surface border border-border rounded-xl px-5 py-3 text-sm">
             <div>
               <span className="text-fg">Q{p.quarter} {p.type.replace('_', ' ')}</span>
               {p.paidDate && <span className="text-fg-muted ml-2">· paid {new Date(p.paidDate).toLocaleDateString()}</span>}

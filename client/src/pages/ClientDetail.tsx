@@ -68,7 +68,7 @@ export default function ClientDetail() {
         <h1 className="text-xl font-semibold text-fg">{client.name}</h1>
         {client.company && <p className="text-fg-secondary text-sm mt-1">{client.company}</p>}
 
-        <div className="grid grid-cols-2 gap-4 mt-4 text-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 text-sm">
           {client.contactEmail && (
             <div>
               <span className="text-fg-muted">Email</span>
@@ -142,7 +142,7 @@ export default function ClientDetail() {
             <Link
               key={inv.id}
               to={`/invoices/${inv.id}`}
-              className="flex items-center justify-between bg-surface border border-border rounded-xl px-4 py-3 hover:border-brand/50 transition-colors text-sm"
+              className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 bg-surface border border-border rounded-xl px-4 py-3 hover:border-brand/50 transition-colors text-sm"
             >
               <span className="text-fg font-medium">{inv.invoiceNumber}</span>
               <div className="flex items-center gap-4">
