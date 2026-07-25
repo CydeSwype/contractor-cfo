@@ -14,10 +14,11 @@ export async function listInvoices(req: AuthRequest, res: Response): Promise<voi
   const householdId = requireHousehold(req, res);
   if (!householdId) return;
 
-  const { status, clientId, year } = req.query as {
+  const { status, clientId, year, includeVoid } = req.query as {
     status?: string;
     clientId?: string;
     year?: string;
+    includeVoid?: string;
   };
 
   // Promote stale sent invoices to overdue before reading
@@ -26,9 +27,14 @@ export async function listInvoices(req: AuthRequest, res: Response): Promise<voi
     data: { status: 'overdue' },
   });
 
+  // Voided invoices are hidden by default — pass status=void to fetch only them, or
+  // includeVoid=true to fetch everything else without excluding them.
+  const voidFilter = status ? {} : includeVoid === 'true' ? {} : { status: { not: 'void' } };
+
   const invoices = await prisma.cfoInvoice.findMany({
     where: {
       householdId,
+      ...voidFilter,
       ...(status && { status }),
       ...(clientId && { clientId: parseInt(clientId, 10) }),
       ...(year && {
