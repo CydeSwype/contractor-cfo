@@ -21,7 +21,7 @@ export const archiveClient = (id: number) =>
   api.patch<CfoClient>(`/cfo/clients/${id}/archive`).then(r => r.data);
 
 // Invoices
-export const getInvoices = (params?: { status?: string; clientId?: number; year?: number }) =>
+export const getInvoices = (params?: { status?: string; clientId?: number; year?: number; includeVoid?: boolean }) =>
   api.get<CfoInvoice[]>('/cfo/invoices', { params }).then(r => r.data);
 export const getInvoice = (id: number) =>
   api.get<CfoInvoice>(`/cfo/invoices/${id}`).then(r => r.data);

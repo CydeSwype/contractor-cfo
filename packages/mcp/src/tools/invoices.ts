@@ -11,11 +11,13 @@ const lineItemSchema = z.object({
 export function registerInvoiceTools(server: McpServer) {
   server.tool(
     'list_invoices',
-    'List invoices. Optionally filter by status (draft/sent/paid/overdue/void), clientId, or year.',
+    'List invoices. Optionally filter by status (draft/sent/paid/overdue/void), clientId, or year. ' +
+      'Voided invoices are excluded unless status is set to "void" or includeVoid is true.',
     {
       status: z.enum(['draft', 'sent', 'paid', 'overdue', 'void']).optional(),
       clientId: z.number().int().optional(),
       year: z.number().int().optional(),
+      includeVoid: z.boolean().optional(),
     },
     async (params) => {
       const { data } = await api.get('/cfo/invoices', { params });
