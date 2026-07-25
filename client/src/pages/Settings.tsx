@@ -89,7 +89,7 @@ export default function Settings() {
                 onChange={e => setHousehold(h => h ? { ...h, name: e.target.value } : h)}
                 className="w-full bg-canvas border border-border rounded-lg px-3 py-2 text-fg text-sm focus:outline-none focus:border-brand" />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs text-fg-secondary mb-1">State</label>
                 <select value={household.state ?? ''}
@@ -126,7 +126,7 @@ export default function Settings() {
 
             <div className="border-t border-border pt-3 space-y-3">
               <p className="text-xs text-fg-muted">Tax estimate inputs — used by the dashboard and Claude</p>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs text-fg-secondary mb-1">Prior year total tax ($)</label>
                   <input type="number" step="1" min="0"
@@ -158,7 +158,7 @@ export default function Settings() {
           <div className="mt-4">
             <h3 className="text-xs text-fg-muted mb-2">Members</h3>
             {household.members.map(m => (
-              <div key={m.id} className="flex items-center justify-between bg-surface border border-border rounded-xl px-4 py-3 mb-2 text-sm">
+              <div key={m.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 bg-surface border border-border rounded-xl px-4 py-3 mb-2 text-sm">
                 <div>
                   <span className="text-fg">{m.name}</span>
                   <span className="text-fg-muted ml-2">{m.email}</span>
@@ -211,7 +211,7 @@ export default function Settings() {
 
         <div className="space-y-2">
           {tokens.map(tok => (
-            <div key={tok.id} className="flex items-center justify-between bg-surface border border-border rounded-xl px-4 py-3 text-sm">
+            <div key={tok.id} className="flex items-center justify-between flex-wrap gap-2 bg-surface border border-border rounded-xl px-4 py-3 text-sm">
               <div>
                 <span className="text-fg">{tok.name}</span>
                 {tok.lastUsedAt && <span className="text-fg-muted text-xs ml-2">last used {new Date(tok.lastUsedAt).toLocaleDateString()}</span>}

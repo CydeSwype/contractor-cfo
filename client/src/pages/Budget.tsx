@@ -25,7 +25,7 @@ export default function Budget() {
 
   return (
     <div className="max-w-3xl">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <h1 className="text-2xl font-semibold text-fg">Budget</h1>
         <input
           type="month"
@@ -35,18 +35,18 @@ export default function Budget() {
         />
       </div>
 
-      <div className="flex gap-4 mb-6 text-sm">
-        <div className="bg-surface border border-border rounded-xl px-5 py-4 flex-1">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6 text-sm">
+        <div className="bg-surface border border-border rounded-xl px-3 sm:px-5 py-4">
           <div className="text-fg-muted mb-1">Spent</div>
-          <div className="text-2xl font-semibold text-fg">{fmt(totalActual)}</div>
+          <div className="text-lg sm:text-2xl font-semibold text-fg">{fmt(totalActual)}</div>
         </div>
-        <div className="bg-surface border border-border rounded-xl px-5 py-4 flex-1">
+        <div className="bg-surface border border-border rounded-xl px-3 sm:px-5 py-4">
           <div className="text-fg-muted mb-1">Budgeted</div>
-          <div className="text-2xl font-semibold text-fg">{totalBudget ? fmt(totalBudget) : '—'}</div>
+          <div className="text-lg sm:text-2xl font-semibold text-fg">{totalBudget ? fmt(totalBudget) : '—'}</div>
         </div>
-        <div className="bg-surface border border-border rounded-xl px-5 py-4 flex-1">
+        <div className="bg-surface border border-border rounded-xl px-3 sm:px-5 py-4">
           <div className="text-fg-muted mb-1">Variance</div>
-          <div className={`text-2xl font-semibold ${totalBudget && totalActual > totalBudget ? 'text-danger' : 'text-success'}`}>
+          <div className={`text-lg sm:text-2xl font-semibold ${totalBudget && totalActual > totalBudget ? 'text-danger' : 'text-success'}`}>
             {totalBudget ? fmt(totalActual - totalBudget) : '—'}
           </div>
         </div>
@@ -55,8 +55,8 @@ export default function Budget() {
       {loading ? (
         <p className="text-fg-muted text-sm">Loading…</p>
       ) : (
-        <div className="bg-surface border border-border rounded-xl overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="bg-surface border border-border rounded-xl overflow-x-auto">
+          <table className="w-full text-sm min-w-[480px]">
             <thead>
               <tr className="border-b border-border text-fg-muted">
                 <th className="text-left px-5 py-3 font-normal">Category</th>
