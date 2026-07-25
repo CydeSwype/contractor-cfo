@@ -83,7 +83,7 @@ model CfoClient {
   hourlyRate   Decimal?   @db.Decimal(10, 2)
   notes        String?
   invoiceNotes String?   // how to submit invoices for this client
-  invoiceNumberPrefix String? // e.g. "WF" → WF-2026-001; null falls back to the household default "INV"
+  invoiceNumberPrefix String? // e.g. "WF" → WF-2026-07-001; null means it's auto-derived from the client name on first invoice and persisted here
   archivedAt   DateTime?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt

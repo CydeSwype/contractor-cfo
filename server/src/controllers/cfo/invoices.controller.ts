@@ -87,17 +87,8 @@ export async function createInvoice(req: AuthRequest, res: Response): Promise<vo
     if (validationError) { res.status(400).json({ error: validationError }); return; }
   }
 
-  const number = invoiceNumber ?? (await nextInvoiceNumber(householdId, clientId));
-
-  const invoice = await prisma.cfoInvoice.create({
-    data: {
-      householdId,
-      clientId,
-      invoiceNumber: number,
-      issuedAt: issuedAt ? new Date(issuedAt) : new Date(),
-      dueAt: dueAt ? new Date(dueAt) : null,
-      notes,
-      ...(lineItems?.length && {
+  const lineItemsData = lineItems?.length
+    ? {
         lineItems: {
           create: lineItems.map((item, i) => {
             const amount = item.quantity * item.unitPrice;
@@ -110,10 +101,41 @@ export async function createInvoice(req: AuthRequest, res: Response): Promise<vo
             };
           }),
         },
-      }),
-    },
-    include: { lineItems: true, client: true },
-  });
+      }
+    : undefined;
+
+  // Auto-generated numbers are usually collision-free, but under concurrent requests two
+  // calls can compute the same "next" number before either commits — retry with a freshly
+  // generated number rather than surfacing a bare 500 on the unique-constraint conflict.
+  const maxAttempts = invoiceNumber ? 1 : 3;
+  let invoice;
+  for (let attempt = 1; ; attempt++) {
+    const number = invoiceNumber ?? (await nextInvoiceNumber(householdId, clientId));
+    try {
+      invoice = await prisma.cfoInvoice.create({
+        data: {
+          householdId,
+          clientId,
+          invoiceNumber: number,
+          issuedAt: issuedAt ? new Date(issuedAt) : new Date(),
+          dueAt: dueAt ? new Date(dueAt) : null,
+          notes,
+          ...lineItemsData,
+        },
+        include: { lineItems: true, client: true },
+      });
+      break;
+    } catch (err) {
+      const isUniqueConflict = err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002';
+      if (!isUniqueConflict || attempt >= maxAttempts) {
+        if (isUniqueConflict) {
+          res.status(409).json({ error: `Invoice number "${number}" already exists for this household.` });
+          return;
+        }
+        throw err;
+      }
+    }
+  }
 
   if (lineItems?.length) {
     await recalculateInvoiceTotals(invoice.id);
