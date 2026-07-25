@@ -45,17 +45,19 @@ export default function Invoices() {
   const [timePeriod, setTimePeriod] = useState('');
   const [selectedClientIds, setSelectedClientIds] = useState<Set<number>>(new Set());
   const [clientPickerOpen, setClientPickerOpen] = useState(false);
+  const [showVoided, setShowVoided] = useState(false);
   const clientPickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    setLoading(true);
     Promise.all([
-      getInvoices(),
+      getInvoices(showVoided ? { includeVoid: true } : undefined),
       getClients(),
     ]).then(([invs, cls]) => {
       setAllInvoices(invs as InvoiceWithClient[]);
       setClients(cls);
     }).finally(() => setLoading(false));
-  }, []);
+  }, [showVoided]);
 
   // Close client picker on outside click
   useEffect(() => {
@@ -130,8 +132,18 @@ export default function Invoices() {
     setSelectedClientIds(new Set());
   }
 
+  function toggleShowVoided() {
+    setShowVoided(prev => {
+      const next = !prev;
+      if (!next && statusFilter === 'void') setStatusFilter('');
+      return next;
+    });
+  }
+
   const hasActiveFilters = statusFilter || timeMode || selectedClientIds.size > 0;
-  const statuses = ['', 'draft', 'sent', 'paid', 'overdue', 'void'];
+  const statuses = showVoided
+    ? ['', 'draft', 'sent', 'paid', 'overdue', 'void']
+    : ['', 'draft', 'sent', 'paid', 'overdue'];
   const clientLabel = selectedClientIds.size === 0
     ? 'Clients'
     : selectedClientIds.size === 1
@@ -267,6 +279,17 @@ export default function Invoices() {
               Clear
             </button>
           )}
+
+          {/* Show voided toggle */}
+          <label className="flex items-center gap-1.5 text-xs text-fg-muted hover:text-fg cursor-pointer ml-auto">
+            <input
+              type="checkbox"
+              checked={showVoided}
+              onChange={toggleShowVoided}
+              className="accent-brand"
+            />
+            Show voided
+          </label>
         </div>
       </div>
 

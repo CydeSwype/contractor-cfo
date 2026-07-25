@@ -44,14 +44,14 @@ ambiguous, list the options and ask.
 **Leave `invoiceNumber` unset on the create call** (step 5) and let the API
 generate it — this is the source of truth now, not something to infer.
 
-- If the client has `invoiceNumberPrefix` set (e.g. `"WF"`), the API
-  generates the next number in that client's own `WF-YYYY-NNN` sequence and
-  will reject a mismatched explicit number if you pass one anyway.
-- If `invoiceNumberPrefix` is null, the API falls back to the shared
-  `INV-YYYY-NNN` sequence. This is a legacy/unconfigured client — after
-  creating the invoice, suggest to the user that they set a prefix for this
-  client (via `update_client` or Settings → that client) so future invoices
-  don't depend on inferring a scheme from history.
+- Every client has their own numbering sequence: `{Prefix}-YYYY-MM-NNN`, e.g.
+  `WF-2026-07-003`. If the client already has `invoiceNumberPrefix` set (e.g.
+  `"WF"`), the API uses it; otherwise it derives one from the client's name
+  the first time (e.g. "Wildfire Systems, Inc." -> `"WSI"`) and saves it to
+  the client record, so it stays stable for every invoice after. It will
+  reject a mismatched explicit number if you pass one.
+- The sequence resets per calendar month per client, so `NNN` starts back at
+  `001` each month — that's expected, not a bug.
 - Only fall back to reading `GET {base}/cfo/invoices?clientId={id}` and
   inferring a number yourself if the API rejects the auto-generated number
   for some reason you can't resolve (it shouldn't) — don't do this as the
