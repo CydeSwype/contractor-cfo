@@ -80,6 +80,7 @@ model CfoClient {
   company      String?
   contactEmail String?
   contactPhone String?
+  apEmail      String?   // accounts payable email — "to" address for automated invoice sending
   hourlyRate   Decimal?   @db.Decimal(10, 2)
   notes        String?
   invoiceNotes String?   // how to submit invoices for this client

@@ -39,6 +39,7 @@ export interface CfoClient {
   company: string | null;
   contactEmail: string | null;
   contactPhone: string | null;
+  apEmail: string | null;
   hourlyRate: string | null;
   notes: string | null;
   invoiceNotes: string | null;
@@ -84,7 +85,7 @@ export interface CfoInvoice {
   notes: string | null;
   createdAt: string;
   updatedAt: string;
-  client?: Pick<CfoClient, 'id' | 'name' | 'company'>;
+  client?: Pick<CfoClient, 'id' | 'name' | 'company' | 'contactEmail' | 'apEmail'>;
   lineItems?: CfoLineItem[];
 }
 

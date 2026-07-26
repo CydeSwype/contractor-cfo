@@ -21,6 +21,7 @@ export function registerClientTools(server: McpServer) {
       company: z.string().optional().describe('Company name'),
       contactEmail: z.string().email().optional(),
       contactPhone: z.string().optional(),
+      apEmail: z.string().email().optional().describe('Accounts payable email — "to" address used when emailing this client their invoices'),
       hourlyRate: z.number().positive().optional().describe('Default hourly billing rate in USD'),
       notes: z.string().optional(),
       invoiceNumberPrefix: z.string().optional().describe(
@@ -45,6 +46,7 @@ export function registerClientTools(server: McpServer) {
       company: z.string().optional(),
       contactEmail: z.string().email().optional(),
       contactPhone: z.string().optional(),
+      apEmail: z.string().email().optional().describe('Accounts payable email — "to" address used when emailing this client their invoices'),
       hourlyRate: z.number().positive().optional(),
       notes: z.string().optional(),
       invoiceNumberPrefix: z.string().optional().describe(

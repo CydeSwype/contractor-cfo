@@ -19,12 +19,15 @@ export default function ClientDetail() {
   const [savingNotes, setSavingNotes] = useState(false);
   const [prefixDraft, setPrefixDraft] = useState('');
   const [savingPrefix, setSavingPrefix] = useState(false);
+  const [apEmailDraft, setApEmailDraft] = useState('');
+  const [savingApEmail, setSavingApEmail] = useState(false);
 
   useEffect(() => {
     if (id) getClient(parseInt(id, 10)).then(c => {
       setClient(c as ClientWithInvoices);
       setInvoiceNotesDraft(c.invoiceNotes ?? '');
       setPrefixDraft(c.invoiceNumberPrefix ?? '');
+      setApEmailDraft(c.apEmail ?? '');
     });
   }, [id]);
 
@@ -38,6 +41,19 @@ export default function ClientDetail() {
       setClient(prev => prev ? { ...prev, invoiceNotes: updated.invoiceNotes } : prev);
     } finally {
       setSavingNotes(false);
+    }
+  }
+
+  async function saveApEmail() {
+    if (!client) return;
+    const trimmed = apEmailDraft.trim();
+    if (trimmed === (client.apEmail ?? '')) return;
+    setSavingApEmail(true);
+    try {
+      const updated = await updateClient(client.id, { apEmail: trimmed || null });
+      setClient(prev => prev ? { ...prev, apEmail: updated.apEmail } : prev);
+    } finally {
+      setSavingApEmail(false);
     }
   }
 
@@ -75,6 +91,12 @@ export default function ClientDetail() {
               <p className="text-fg mt-0.5">{client.contactEmail}</p>
             </div>
           )}
+          {client.apEmail && (
+            <div>
+              <span className="text-fg-muted">AP email</span>
+              <p className="text-fg mt-0.5">{client.apEmail}</p>
+            </div>
+          )}
           {client.contactPhone && (
             <div>
               <span className="text-fg-muted">Phone</span>
@@ -109,6 +131,19 @@ export default function ClientDetail() {
           className="w-full bg-canvas border border-border rounded-lg px-3 py-2 text-sm text-fg placeholder:text-fg-muted focus:outline-none focus:border-brand resize-none"
         />
         {savingNotes && <p className="text-xs text-fg-muted mt-1">Saving…</p>}
+
+        <div className="border-t border-border pt-3 mt-4">
+          <label className="block text-xs text-fg-secondary mb-1">Accounts payable email</label>
+          <input
+            type="email"
+            value={apEmailDraft}
+            onChange={e => setApEmailDraft(e.target.value)}
+            onBlur={saveApEmail}
+            placeholder="e.g. ap@company.com — used as the 'to' address when emailing invoices"
+            className="w-full bg-canvas border border-border rounded-lg px-3 py-2 text-sm text-fg placeholder:text-fg-muted focus:outline-none focus:border-brand"
+          />
+          {savingApEmail && <p className="text-xs text-fg-muted mt-1">Saving…</p>}
+        </div>
 
         <div className="border-t border-border pt-3 mt-4">
           <label className="block text-xs text-fg-secondary mb-1">Invoice number prefix</label>

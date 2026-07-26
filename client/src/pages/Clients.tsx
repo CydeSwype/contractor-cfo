@@ -7,7 +7,7 @@ import type { CfoClient } from '@contractor-cfo/shared';
 export default function Clients() {
   const [clients, setClients] = useState<CfoClient[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: '', company: '', contactEmail: '', hourlyRate: '' });
+  const [form, setForm] = useState({ name: '', company: '', contactEmail: '', apEmail: '', hourlyRate: '' });
   const [saving, setSaving] = useState(false);
 
   useEffect(() => { getClients().then(setClients); }, []);
@@ -20,10 +20,11 @@ export default function Clients() {
         name: form.name,
         company: form.company || undefined,
         contactEmail: form.contactEmail || undefined,
+        apEmail: form.apEmail || undefined,
         hourlyRate: form.hourlyRate ? parseFloat(form.hourlyRate) as unknown as string : undefined,
       });
       setClients(cs => [...cs, client]);
-      setForm({ name: '', company: '', contactEmail: '', hourlyRate: '' });
+      setForm({ name: '', company: '', contactEmail: '', apEmail: '', hourlyRate: '' });
       setShowForm(false);
     } finally {
       setSaving(false);
@@ -50,6 +51,7 @@ export default function Clients() {
             { key: 'name', label: 'Name *', type: 'text', required: true },
             { key: 'company', label: 'Company', type: 'text' },
             { key: 'contactEmail', label: 'Email', type: 'email' },
+            { key: 'apEmail', label: 'Accounts payable email', type: 'email' },
             { key: 'hourlyRate', label: 'Hourly rate ($)', type: 'number' },
           ].map(({ key, label, type, required }) => (
             <div key={key}>

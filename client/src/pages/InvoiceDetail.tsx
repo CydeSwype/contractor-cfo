@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Send, XCircle, CheckCircle2, RotateCcw, FileText, Upload, Download, Trash2 } from 'lucide-react';
+import { ArrowLeft, Send, XCircle, CheckCircle2, RotateCcw, FileText, Upload, Download, Trash2, Mail } from 'lucide-react';
 import {
   getInvoice, markInvoiceSent, voidInvoice, createTransaction, updateInvoice,
   listAttachments, uploadAttachment, downloadAttachmentUrl, deleteAttachment, getInvoicePdfUrl,
@@ -75,7 +75,16 @@ export default function InvoiceDetail() {
   if (!invoice) return <div className="text-fg-muted">Loading…</div>;
 
   const lineItems = (invoice as CfoInvoice & { lineItems?: { id: number; description: string; quantity: string; unitPrice: string; amount: string }[] }).lineItems ?? [];
-  const client = (invoice as CfoInvoice & { client?: { name: string; company?: string } }).client;
+  const client = invoice.client;
+
+  // "Service period Jun 15–30, 2026." lives in notes (see the /invoice skill) — pull it
+  // out for the email subject; fall back to the invoice number if notes don't have one.
+  const periodMatch = invoice.notes?.match(/service period:?\s*([^.\n]+)/i);
+  const period = periodMatch ? periodMatch[1].trim() : invoice.invoiceNumber;
+  const mailSubject = `${client?.name ?? 'Invoice'} contract work invoice - ${period}`;
+  const mailBody = 'Thank you for your business!';
+  const apEmail = client?.apEmail || client?.contactEmail || '';
+  const mailtoHref = `mailto:${apEmail}?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(mailBody)}`;
 
   return (
     <div className="max-w-2xl">
@@ -223,6 +232,21 @@ export default function InvoiceDetail() {
               <Download size={12} />
               Download PDF
             </a>
+            {apEmail ? (
+              <a
+                href={mailtoHref}
+                className="flex items-center gap-1.5 text-xs text-brand hover:opacity-80"
+                title="Opens your default mail app — the PDF isn't attached automatically, so download it above and attach it manually"
+              >
+                <Mail size={12} />
+                Email invoice
+              </a>
+            ) : (
+              <span className="flex items-center gap-1.5 text-xs text-fg-muted" title="Set an accounts payable email on this client to enable">
+                <Mail size={12} />
+                Email invoice
+              </span>
+            )}
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
